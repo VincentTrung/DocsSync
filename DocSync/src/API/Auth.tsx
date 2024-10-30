@@ -1,6 +1,6 @@
 //import { GoogleAuthProvider } from "firebase/auth/web-extension";
 import { auth} from "../firebaseConfig"
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { GoogleAuthProvider, signInWithPopup} from 'firebase/auth'
 
 let provider = new GoogleAuthProvider()
 
@@ -11,3 +11,5 @@ export const GoogleLogin = () => {
   // });
   signInWithPopup(auth, provider);
 };
+
+

@@ -4,9 +4,10 @@ body {
   //background-color: #212121;
   margin:0;
   padding: 0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  height: auto;
+  padding-top: 100px // because of menubar
+  // display: flex;
+  // justify-content: center;
+  // align-items: center;
   
 }

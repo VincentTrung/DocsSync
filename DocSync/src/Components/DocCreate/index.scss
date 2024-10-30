@@ -1,0 +1,23 @@
+.doc-create-container{
+  background-color: rgb(228, 228, 228);
+  display: flex;
+  justify-content: center;
+
+  .doc-create-inner{
+    width: 75%;
+
+    .start-doc-card{
+      width:150px;
+      height: 200px;
+      background: white;
+      cursor: pointer;
+      border: 2px solid rgba(220, 220, 220, 0.787);
+      border-radius: 4px;
+    }
+    .start-doc-card:hover{
+      border: 2px solid blue;
+    }
+
+  }
+}
+
