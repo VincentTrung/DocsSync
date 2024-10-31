@@ -19,23 +19,23 @@ const io = require("socket.io")(3000, {
   },
 });
 
-// Listen for client connections to the WebSocket server
+// Listen for client connections to server
 io.on("connection", (socket) => {
   console.log(`Socket ${socket.id} connected`);
 
-  // Listen for the "get-document" event from the client
+  // Listen for the "get-document" event from client
   socket.on("get-document", async (docId) => {
-    // Retrieve or create a document with the provided document ID
+    // Retrieve or create a document with document ID
     const document = await getOrInitializeDocument(docId);
 
-    // Join the socket to a room specific to the document ID
+    // Join the socket specific to the document ID
     socket.join(docId);
 
     // Send the document data to the client to load in their editor
     socket.emit("load-document", document.data);
   });
 
-  // Log when a client disconnects
+  // Check if client disconnets
   socket.on("disconnect", () => {
     console.log("A client disconnected");
   });
@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
 
 // Helper function to retrieve an existing document by ID or create a new one
 async function getOrInitializeDocument(id) {
-  if (!id) return; // Exit if no ID is provided
+  if (!id) return;
 
   // Try to find the document by ID in the database
   const document = await Document.findById(id);
