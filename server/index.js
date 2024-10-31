@@ -33,6 +33,16 @@ io.on("connection", (socket) => {
 
     // Send the document data to the client to load in their editor
     socket.emit("load-document", document.data);
+
+    // Broadcasting to clients connected to room
+    socket.on("send-changes", (data) => {
+      socket.broadcast.to(docId).emit("receive-changes", data);
+    });
+
+    // Saving the document using mongoDB
+    socket.on("save-document", async (data) => {
+      await Document.findByIdAndUpdate(docId, { data });
+    });
   });
 
   // Check if client disconnets

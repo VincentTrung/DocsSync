@@ -4,6 +4,9 @@ import { io } from "socket.io-client";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 
+// Interval to save document
+const INTERVAL_TO_SAVE = 1000;
+
 // Define toolbar options for the Quill editor
 const TOOLBAR_OPTION = [
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
@@ -24,8 +27,6 @@ export default function TextEditor() {
   const [socket, setSocket] = useState();
   const [quill, setQuill] = useState();
 
-  useEffect(() => {}, [socket, quill]);
-
   // Initialize socket connection
   useEffect(() => {
     // connecting to the backend of socket.io server
@@ -37,6 +38,44 @@ export default function TextEditor() {
       s.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if ((socket == null) | (quill == null)) return;
+
+    const interval = setInterval(() => {
+      socket.emit("save-document", quill.getContents());
+    }, INTERVAL_TO_SAVE);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [socket, quill]);
+
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const handler = (dataChange, oldDataChange, source) => {
+      if (source !== "user") return;
+      socket.emit("send-changes", dataChange);
+    };
+    quill.on("text-change", handler);
+
+    return () => {
+      quill.off("text-change", handler);
+    };
+  }, [socket, quill]);
+
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const handler = (dataChange) => {
+      quill.updateContents(dataChange);
+    };
+    socket.on("receive-changes", handler);
+
+    return () => {
+      socket.off("receive-changes", handler);
+    };
+  }, [socket, quill]);
 
   // Listen for "load-document" event and load the document content
   useEffect(() => {
