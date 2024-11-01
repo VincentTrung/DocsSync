@@ -7,16 +7,17 @@ import "quill/dist/quill.snow.css";
 // Interval to save document
 const INTERVAL_TO_SAVE = 1000;
 
+// QUILL //
 // Define toolbar options for the Quill editor
 const TOOLBAR_OPTION = [
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
-  [{ font: [] }],
+  [{ font: [] }, { size: ["small", false, "large", "huge"] }],
   [{ list: "ordered" }, { list: "bullet" }],
   ["bold", "italic", "underline"],
   [{ color: [] }, { background: [] }],
   [{ script: "sub" }, { script: "super" }],
   [{ align: [] }],
-  ["image", "blockquote", "code-block"],
+  ["link", "image", "blockquote"],
   ["clean"],
 ];
 
@@ -39,6 +40,7 @@ export default function TextEditor() {
     };
   }, []);
 
+  // Save document at regular intervals
   useEffect(() => {
     if ((socket == null) | (quill == null)) return;
 
@@ -50,6 +52,7 @@ export default function TextEditor() {
     };
   }, [socket, quill]);
 
+  // Emit changes to server when clients make edit
   useEffect(() => {
     if (socket == null || quill == null) return;
 
@@ -64,6 +67,7 @@ export default function TextEditor() {
     };
   }, [socket, quill]);
 
+  // Listen and apply incoming changes from server
   useEffect(() => {
     if (socket == null || quill == null) return;
 

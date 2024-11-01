@@ -2,25 +2,30 @@ import "./App.css";
 import { v4 as uuidV4 } from "uuid";
 import {
   BrowserRouter as Router,
-  Switch,
   Route,
-  Redirect,
+  Routes,
+  Navigate,
 } from "react-router-dom";
-import TextEditor from "./TextEditor";
+import TextEditor from "./components/Docs/TextEditor.jsx";
+import Login from "./components/LoginPage/Login.jsx";
+import Signup from "./components/LoginPage/Signup.jsx";
+import Home from "./components/Homepage/Home.jsx";
 
-// Create a document with a unique id
 function App() {
   return (
     <Router>
-      <Switch>
-        <Route path="/" exact>
-          <Redirect to={`/documents/${uuidV4()}`}></Redirect>
-        </Route>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/home" element={<Home />} />
 
-        <Route path="/documents/:id" exact>
-          <TextEditor />
-        </Route>
-      </Switch>
+        <Route
+          path="/documents"
+          element={<Navigate to={`/documents/${uuidV4()}`} />}
+        />
+
+        <Route path="/documents/:id" element={<TextEditor />} />
+      </Routes>
     </Router>
   );
 }
