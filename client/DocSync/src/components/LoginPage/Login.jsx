@@ -1,53 +1,76 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  async function submit(e) {
-    e.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Prevent the default form submission
+    setErrorMessage(""); // Reset any previous error message
 
     try {
-      const res = await axios.post("http://localhost:8000/", {
-        username,
-        password,
-      });
+      // Send login request to the backend
+      const response = await axios.post(
+        "http://localhost:8000/",
+        { username, password },
+        { withCredentials: true }
+      );
 
-      if (res.data.status === "success") {
-        // Successful login, navigate to home page
-        navigate("/home", { state: { id: username } });
-      } else if (res.data.status === "notfound") {
-        alert("User not found. Please sign up.");
-      } else if (res.data.status === "invalid") {
-        alert("Incorrect password.");
+      // Check if login was successful
+      if (response.data.status === "success") {
+        navigate("/home", { state: { username: response.data.username } }); // Pass username to the next route
+      } else {
+        setErrorMessage("Login failed: " + response.data.status);
       }
     } catch (error) {
-      alert("An error occurred during login. Please try again.");
-      console.error(error);
+      // error handling
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            setErrorMessage(
+              "Invalid credentials. Please check your username and password."
+            ); // Unauthorized
+            break;
+          case 404:
+            setErrorMessage("User not found. Please check your username."); // Not Found
+            break;
+          case 500:
+            setErrorMessage("Server error. Please try again later."); // Server Error
+            break;
+          default:
+            setErrorMessage("An error occured. Please try again.");
+        }
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setErrorMessage("Error: " + error.message);
+      }
     }
-  }
+  };
 
   return (
     <div className="login">
-      <h1>Login Page</h1>
-      <form onSubmit={submit}>
+      <h2>Login</h2>
+      <form onSubmit={handleLogin}>
         <input
           type="text"
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
+          placeholder="Enter your username"
           required
         />
         <input
           type="password"
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Enter your password"
           required
         />
         <button type="submit">Login</button>
       </form>
+      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}{" "}
+      {/* Display error message if any */}
       <p>OR</p>
       <Link to="/signup">Signup Page</Link>
     </div>

@@ -7,9 +7,11 @@ export default function Signup() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  async function submit(e) {
+  const submit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
 
     try {
       const res = await axios.post("http://localhost:8000/signup", {
@@ -17,36 +19,38 @@ export default function Signup() {
         password,
       });
 
+      // handle errors
       if (res.data.status === "exists") {
-        alert("User already exists. Please log in.");
+        setErrorMessage("User already exists. Please log in.");
       } else if (res.data.status === "created") {
-        // Successful signup, navigate to home page
-        navigate("/home", { state: { id: username } });
+        navigate("/", { state: { id: username } });
       }
     } catch (error) {
-      alert("An error occurred during signup. Please try again.");
+      setErrorMessage("An error occurred during signup. Please try again.");
       console.error(error);
     }
-  }
+  };
 
   return (
     <div className="signup">
-      <h1>Signup Page</h1>
+      <h2>Signup</h2>
       <form onSubmit={submit}>
         <input
           type="text"
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
+          placeholder="Enter your username"
           required
         />
         <input
           type="password"
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Enter your password"
           required
         />
         <button type="submit">Signup</button>
       </form>
+      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}{" "}
+      {/* Display error message if any */}
       <p>OR</p>
       <Link to="/">Login Page</Link>
     </div>

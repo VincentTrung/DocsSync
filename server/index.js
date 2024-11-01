@@ -4,15 +4,55 @@ const cors = require("cors");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Frontend URL
+    credentials: true,
+  })
+);
 
 // Import required modules
 const mongoose = require("mongoose");
 const Document = require("./Document");
-const bcrypt = require("bcrypt");
-
 // Default content for new documents
 const initialContent = "";
+
+const bcrypt = require("bcrypt");
+
+// Sessions
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
+// Check if authenticated
+function isAuthenticated(req, res, next) {
+  if (!req.session.username)
+    return res.status(401).json({ error: "Access denied" });
+  next();
+}
+
+// Configure session middleware
+app.use(
+  session({
+    secret: "HelpMe",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: "mongodb://localhost:27017/DocSyncData",
+      collectionName: "sessions",
+    }),
+    cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }, // 1 day
+  })
+);
+
+// Endpoint to check auth
+app.get("/home", isAuthenticated, (req, res) => {
+  res.json({ message: "Welcome to the homepage!" });
+});
+
+// Endpoint to get the logged-in user's username
+app.get("/session", isAuthenticated, (req, res) => {
+  //console.log(req.session.username);
+  res.json({ username: req.session.username });
+});
 
 // Establish a connection to the MongoDB database
 mongoose
@@ -47,17 +87,19 @@ app.post("/", async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await UserCollection.findOne({ username: username });
-    if (!user) {
-      return res.status(404).json({ status: "notfound" }); // User not found
-    }
+    const user = await UserCollection.findOne({ username });
+    if (!user) return res.status(404).json({ status: "notfound" });
 
-    // Compare the entered password with the stored hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
-      return res.json({ status: "success" }); // Passwords match, login successful
+      req.session.username = user.username; // Save username in session
+      //console.log("Session data:", req.session);
+      return res.json({
+        status: "success",
+        username: user.username,
+      });
     } else {
-      return res.json({ status: "invalid" }); // Passwords do not match
+      return res.status(401).json({ status: "invalid" });
     }
   } catch (error) {
     console.error(error);
