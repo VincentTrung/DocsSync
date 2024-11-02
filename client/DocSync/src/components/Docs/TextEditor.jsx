@@ -31,7 +31,9 @@ export default function TextEditor() {
   // Initialize socket connection
   useEffect(() => {
     // connecting to the backend of socket.io server
-    const s = io("http://localhost:3000");
+    const s = io("http://localhost:3000", {
+      withCredentials: true, // Ensures session cookies are sent
+    });
     setSocket(s);
 
     // Clean up/Disconnecting
@@ -94,6 +96,16 @@ export default function TextEditor() {
     // Emit the "get-document" event with the document ID to request data from the server
     socket.emit("get-document", documentId);
   }, [socket, quill, documentId]);
+
+  // Listen for a redirect if unable to access
+  useEffect(() => {
+    if (socket == null) return;
+
+    // Redirect if unauthorized access
+    socket.on("redirect", (path) => {
+      window.location.href = path;
+    });
+  }, [socket]);
 
   // Set up Quill editor instance and attach it to the wrapper div
   const wrapperRef = useCallback((wrapper) => {

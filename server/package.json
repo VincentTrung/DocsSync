@@ -16,6 +16,7 @@
     "express": "^4.21.1",
     "express-session": "^1.18.1",
     "mongoose": "^8.7.3",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "socket.io-express-session": "^0.1.3"
   }
 }
