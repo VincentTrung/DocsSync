@@ -30,18 +30,26 @@ function isAuthenticated(req, res, next) {
 }
 
 // Configure session middleware
-app.use(
-  session({
-    secret: "HelpMe",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: "mongodb://localhost:27017/DocSyncData",
-      collectionName: "sessions",
-    }),
-    cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }, // 1 day
-  })
-);
+const sessionMiddleware = session({
+  secret: "HelpMe",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: "mongodb://localhost:27017/DocSyncData",
+    collectionName: "sessions",
+  }),
+  cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 },
+});
+
+// Use session middleware in Express app
+app.use(sessionMiddleware);
+
+// Check if authenticated
+function isAuthenticated(req, res, next) {
+  if (!req.session.username)
+    return res.status(401).json({ error: "Access denied" });
+  next();
+}
 
 // Endpoint to check auth
 app.get("/home", isAuthenticated, (req, res) => {
@@ -66,7 +74,7 @@ mongoose
 
 // START OF LOGIN //
 // User Schema
-const newSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
@@ -76,11 +84,7 @@ const newSchema = new mongoose.Schema({
     required: true,
   },
 });
-const UserCollection = mongoose.model("users", newSchema);
-
-module.exports = UserCollection;
-
-app.get("/", cors(), (req, res) => {});
+const UserCollection = mongoose.model("users", userSchema);
 
 // Login Endpoint
 app.post("/", async (req, res) => {
@@ -93,7 +97,7 @@ app.post("/", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
       req.session.username = user.username; // Save username in session
-      console.log("Session data:", req.session);
+      //console.log("Session data:", req.session);
       return res.json({
         status: "success",
         username: user.username,
@@ -112,18 +116,14 @@ app.post("/", async (req, res) => {
 // Signup Endpoint
 app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
-  const data = {
-    username: username,
-    password: password,
-  };
 
   try {
-    const existingUser = await UserCollection.findOne({ username: username });
+    const existingUser = await UserCollection.findOne({ username });
     if (existingUser) {
       return res.json({ status: "exists" });
     }
 
-    // Hash the password before saving to make more secure
+    // Hash the password before saving to make it more secure
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new UserCollection({ username, password: hashedPassword });
     await newUser.save();
@@ -137,29 +137,49 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+// Listen on port 8000 for Express
 app.listen(8000, () => {
-  console.log("port connected");
+  console.log("Express server is running on port 8000");
 });
+// END OF LOGIN //
 
-//END OF LOGIN //
-
-// SOCKET CONNECTIONS (for document collab)//
-// Set up a websocket server using on port 3000
+// SOCKET CONNECTIONS (for document collaboration) //
+// Set up a websocket server using Socket.IO on port 3000
 const io = require("socket.io")(3000, {
   cors: {
     origin: "http://localhost:5173", // Allow CORS for client connection
     methods: ["GET", "POST"], // HTTP methods allowed for CORS
+    credentials: true, // Allow credentials to be sent
   },
 });
 
-// Listen for client connections to server
+// Use session middleware for Socket.IO
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
+
+// Listen for client connections to the server
 io.on("connection", (socket) => {
   console.log(`Socket ${socket.id} connected`);
 
   // Listen for the "get-document" event from client
   socket.on("get-document", async (docId) => {
+    const session = socket.request.session; // Access the session
+    const username = session.username; // Get the current user's username
+    //console.log(session);
+
     // Retrieve or create a document with document ID
-    const document = await getOrInitializeDocument(docId);
+    const document = await getOrInitializeDocument(docId, username);
+
+    // Check if the user is authorized to access the document
+    if (
+      document.owner !== username &&
+      !document.sharedUsers.includes(username)
+    ) {
+      // Emit an event to redirect the client to the home page
+      socket.emit("redirect", "/home");
+      return;
+    }
 
     // Join the socket specific to the document ID
     socket.join(docId);
@@ -178,20 +198,29 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Check if client disconnets
+  // Check if client disconne
   socket.on("disconnect", () => {
     console.log("A client disconnected");
   });
 });
 
 // Helper function to retrieve an existing document by ID or create a new one
-async function getOrInitializeDocument(id) {
+async function getOrInitializeDocument(id, username) {
   if (!id) return;
 
   // Try to find the document by ID in the database
   const document = await Document.findById(id);
 
-  // If document is found, return it; otherwise, create a new one
-  return document || Document.create({ _id: id, data: initialContent });
+  // If the document is found, return it; otherwise, create a new one with the owner
+  if (document) {
+    return document;
+  } else {
+    const newDocument = await Document.create({
+      _id: id,
+      data: "", // Default content for new documents
+      owner: username, // Set the owner to the current user's username
+    });
+    return newDocument;
+  }
 }
 // END OF SOCKET CONNECTIONS //
