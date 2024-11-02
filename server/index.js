@@ -93,7 +93,7 @@ app.post("/", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
       req.session.username = user.username; // Save username in session
-      //console.log("Session data:", req.session);
+      console.log("Session data:", req.session);
       return res.json({
         status: "success",
         username: user.username,
