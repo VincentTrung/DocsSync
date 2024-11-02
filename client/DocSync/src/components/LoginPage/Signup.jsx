@@ -32,7 +32,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="signup">
+    <div className="login">
       <h2>Signup</h2>
       <form onSubmit={submit}>
         <input
@@ -47,7 +47,9 @@ export default function Signup() {
           placeholder="Enter your password"
           required
         />
-        <button type="submit">Signup</button>
+        <div>
+          <button type="submit">Signup</button>
+        </div>
       </form>
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}{" "}
       {/* Display error message if any */}

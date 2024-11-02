@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import "./Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -67,7 +68,9 @@ export default function Login() {
           placeholder="Enter your password"
           required
         />
-        <button type="submit">Login</button>
+        <div>
+          <button type="submit">Login</button>
+        </div>
       </form>
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}{" "}
       {/* Display error message if any */}
