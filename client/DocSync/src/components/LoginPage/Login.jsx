@@ -54,28 +54,30 @@ export default function Login() {
 
   return (
     <div className="login">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
+      <h2 className="loginTitle">Login</h2>
+      {errorMessage && <div className="loginError">{errorMessage}</div>}
+      {/* Display error message if any */}
+      <div><form className="loginForm" onSubmit={handleLogin}>
         <input
+          className="loginInput"
           type="text"
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Enter your username"
           required
         />
         <input
+          className="loginInput"
           type="password"
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
           required
         />
         <div>
-          <button type="submit">Login</button>
+          <button className="loginButton" type="submit">Login</button>
         </div>
-      </form>
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}{" "}
-      {/* Display error message if any */}
-      <p>OR</p>
-      <Link to="/signup">Signup Page</Link>
+      </form></div>
+      <div className="loginText">OR</div>
+      <Link className="loginLink" to="/signup">Signup Page</Link>
     </div>
   );
 }

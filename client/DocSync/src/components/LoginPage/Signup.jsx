@@ -33,28 +33,30 @@ export default function Signup() {
 
   return (
     <div className="login">
-      <h2>Signup</h2>
-      <form onSubmit={submit}>
+      <h2 className="loginTitle">Signup</h2>
+      {errorMessage && <div className="loginError">{errorMessage}</div>}
+      {/* Display error message if any */}
+      <form className="loginForm" onSubmit={submit}>
         <input
+          className="loginInput"
           type="text"
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Enter your username"
           required
         />
         <input
+          className="loginInput"
           type="password"
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
           required
         />
-        <div>
-          <button type="submit">Signup</button>
-        </div>
+      <div>
+        <button className="loginButton" type="submit">Signup</button>
+      </div>
       </form>
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}{" "}
-      {/* Display error message if any */}
-      <p>OR</p>
-      <Link to="/">Login Page</Link>
+      <div className="loginText">OR</div>
+      <Link className="loginLink" to="/">Login Page</Link>
     </div>
   );
 }
