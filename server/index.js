@@ -219,8 +219,42 @@ async function getOrInitializeDocument(id, username) {
       _id: id,
       data: "", // Default content for new documents
       owner: username, // Set the owner to the current user's username
+      title: "Untitled Document",
     });
     return newDocument;
   }
 }
 // END OF SOCKET CONNECTIONS //
+
+// Endpoint to get documents accessible to the logged-in user
+app.get("/documents", isAuthenticated, async (req, res) => {
+  const username = req.session.username; // Get the logged-in user's username
+
+  try {
+    // Find documents where the user is either the owner or in the sharedUsers array
+    const documents = await Document.find({
+      $or: [
+        { owner: username }, // User is the owner
+        { sharedUsers: username }, // User is a shared user
+      ],
+    });
+
+    // Format the response to include the document ID and ownership status
+    const formattedDocuments = documents.map((doc) => ({
+      _id: doc._id,
+      data: doc.data,
+      title: doc.title,
+      owner: doc.owner,
+      sharedUsers: doc.sharedUsers,
+      isOwner: doc.owner === username, // Boolean indicating if the user is the owner
+      isSharedUser: doc.sharedUsers.includes(username), // Boolean indicating if the user is a shared user
+    }));
+
+    res.json(formattedDocuments); // Send the documents as a JSON response
+  } catch (error) {
+    console.error("Error fetching documents:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching documents." });
+  }
+});

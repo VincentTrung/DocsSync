@@ -19,10 +19,10 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={<Home />} />
 
-        <Route
+        {/* <Route
           path="/documents"
           element={<Navigate to={`/documents/${uuidV4()}`} />}
-        />
+        /> */}
 
         <Route path="/documents/:id" element={<TextEditor />} />
       </Routes>

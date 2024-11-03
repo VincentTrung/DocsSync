@@ -1,3 +1,65 @@
 .homepage {
   margin-top: 100px;
 }
+
+.box-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start; /* Align to left */
+  align-items: flex-start;
+  width: 100%;
+  margin: 20px 0;
+  padding: 0 20px;
+  overflow-x: auto; /* horizontal scrolling if needed */
+
+  .boxStyle {
+    border: 2px solid rgba(213, 213, 213, 0.787);
+    border-radius: 4px;
+    width: 150px;
+    height: 200px;
+    background-color: white;
+    cursor: pointer;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+    transition: border-color 0.5s ease, background-color 0.2s ease;
+  }
+
+  .boxStyle:hover {
+    border: 2px solid blue;
+    background-color: #f0f0f0;
+  }
+}
+
+.doc-create-container {
+  display: flex;
+  justify-content: left;
+  margin-top: 20px;
+
+  .doc-create-inner {
+    padding: 0 20px;
+    text-align: center;
+
+    .start-doc {
+      border: 2px solid rgba(220, 220, 220, 0.787);
+      border-radius: 4px;
+      width: 150px;
+      height: 200px;
+      background-color: white;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .start-doc:hover {
+      border: 2px solid blue;
+    }
+  }
+}
