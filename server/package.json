@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.jsx",
   "scripts": {
-    "start": "node index.js", 
+    "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,6 +15,7 @@
     "bcrypt": "^5.1.1",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-session": "^1.18.1",
     "mongodb": "^6.10.0",
