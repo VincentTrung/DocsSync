@@ -6,6 +6,8 @@ import "quill/dist/quill.snow.css";
 
 // Interval to save document
 const INTERVAL_TO_SAVE = 1000;
+// Socket connection
+const socketUrl = import.meta.env.VITE_SOCKET_URL;
 
 // QUILL //
 // Define toolbar options for the Quill editor
@@ -31,7 +33,7 @@ export default function TextEditor() {
   // Initialize socket connection
   useEffect(() => {
     // connecting to the backend of socket.io server
-    const s = io("http://localhost:3000", {
+    const s = io(`${socketUrl}`, {
       withCredentials: true, // Ensures session cookies are sent
     });
     setSocket(s);

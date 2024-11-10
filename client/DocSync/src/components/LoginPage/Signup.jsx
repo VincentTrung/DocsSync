@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function Signup() {
     setErrorMessage("");
 
     try {
-      const res = await axios.post("http://localhost:8000/signup", {
+      const res = await axios.post(`${backendUrl}/signup`, {
         username,
         password,
       });
@@ -51,12 +52,16 @@ export default function Signup() {
           placeholder="Enter your password"
           required
         />
-      <div>
-        <button className="loginButton" type="submit">Signup</button>
-      </div>
+        <div>
+          <button className="loginButton" type="submit">
+            Signup
+          </button>
+        </div>
       </form>
       <div className="loginText">OR</div>
-      <Link className="loginLink" to="/">Login Page</Link>
+      <Link className="loginLink" to="/">
+        Login Page
+      </Link>
     </div>
   );
 }

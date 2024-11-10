@@ -4,6 +4,8 @@ import { v4 as uuidV4 } from "uuid";
 import axios from "axios";
 import "./Home.css";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 export default function Home() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("Guest");
@@ -14,12 +16,12 @@ export default function Home() {
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const userResponse = await axios.get("http://localhost:8000/session", {
+        const userResponse = await axios.get(`${backendUrl}/session`, {
           withCredentials: true,
         });
         setUsername(userResponse.data.username);
 
-        const docResponse = await axios.get("http://localhost:8000/documents", {
+        const docResponse = await axios.get(`${backendUrl}/documents`, {
           withCredentials: true,
         });
 

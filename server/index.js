@@ -2,6 +2,7 @@
 require("dotenv").config();
 const port = process.env.PORT;
 const frontendUrl = process.env.FRONTEND_URL;
+console.log(frontendUrl);
 
 // Import modules
 const express = require("express");
@@ -42,10 +43,10 @@ app.use(sessionRoutes);
 
 // Initialize Socket.io event handling for docs collabs
 setupSocket(io, sessionConfig);
-// Start the HTTP server on the specified port
+// Start socket.io
+//io.listen(2000);
 
-http.listen(port, () =>
+// Start the HTTP server on the specified port
+http.listen(port, "0.0.0.0", () =>
   console.log(`Express server is running on port ${port}`)
 );
-// Start socket.io
-io.listen(3000);

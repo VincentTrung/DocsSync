@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import "./Login.css";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Login() {
     try {
       // Send login request to the backend
       const response = await axios.post(
-        "http://localhost:8000/",
+        `${backendUrl}/`,
         { username, password },
         { withCredentials: true }
       );
@@ -57,27 +58,33 @@ export default function Login() {
       <h2 className="loginTitle">Login</h2>
       {errorMessage && <div className="loginError">{errorMessage}</div>}
       {/* Display error message if any */}
-      <div><form className="loginForm" onSubmit={handleLogin}>
-        <input
-          className="loginInput"
-          type="text"
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter your username"
-          required
-        />
-        <input
-          className="loginInput"
-          type="password"
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
-          required
-        />
-        <div>
-          <button className="loginButton" type="submit">Login</button>
-        </div>
-      </form></div>
+      <div>
+        <form className="loginForm" onSubmit={handleLogin}>
+          <input
+            className="loginInput"
+            type="text"
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Enter your username"
+            required
+          />
+          <input
+            className="loginInput"
+            type="password"
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            required
+          />
+          <div>
+            <button className="loginButton" type="submit">
+              Login
+            </button>
+          </div>
+        </form>
+      </div>
       <div className="loginText">OR</div>
-      <Link className="loginLink" to="/signup">Signup Page</Link>
+      <Link className="loginLink" to="/signup">
+        Signup Page
+      </Link>
     </div>
   );
 }
