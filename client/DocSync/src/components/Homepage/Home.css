@@ -63,3 +63,14 @@
     }
   }
 }
+
+.homeHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.signoutButton {
+  margin: 20px;
+}
