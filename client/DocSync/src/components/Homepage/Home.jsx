@@ -62,11 +62,37 @@ export default function Home() {
     navigate(`/documents/${newDocId}`);
   };
 
+  // Handle signout
+  // Documentation for button event handling https://react.dev/learn/responding-to-events#reading-props-in-event-handlers
+  function SignoutButton() {
+    async function onSignout() {
+      const response = await axios
+        .get(`${backendUrl}/signout`, {
+          withCredentials: true,
+        })
+        .then((response) => {
+          console.log("Signed out successfully: ", response);
+          navigate("/"); //put in backend?
+        })
+        .catch((error) => {
+          console.log("Error signing out: ", error);
+        });
+    }
+
+    return (
+      <button className="signoutButton" onClick={onSignout}>
+        Sign Out
+      </button>
+    );
+  }
+
   return (
     <div>
-      <h1>Welcome, {username}!</h1>
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-
+      <div className="homeHeader">
+        <h1>Welcome, {username}!</h1>
+        {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
+        <SignoutButton />
+      </div>
       <div className="doc-create-container">
         <div className="doc-create-inner">
           <div className="start-doc" onClick={handleCreateNewDocument}>
