@@ -126,4 +126,32 @@ router.post(
   }
 );
 
+// Delete a document only if the current user is the owner
+router.delete("/documents/:id", isAuthenticated, async (req, res) => {
+  const { id } = req.params;
+  const username = req.session.username;
+
+  try {
+    const document = await Document.findById(id);
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    if (document.owner !== username) {
+      return res
+        .status(403)
+        .json({ error: "You are not the owner of this document" });
+    }
+
+    // Delete the document
+    await Document.deleteOne({ _id: id });
+
+    res.status(200).json({ message: "Document deleted successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while deleting the document." });
+  }
+});
+
 module.exports = router;

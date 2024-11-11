@@ -61,24 +61,42 @@ export default function Home() {
     fetchUsername();
   }, [navigate]);
 
-  // Handle Creating a new document (with unique id) and then redirecting to it
+  // Handle Create New Document
   const handleCreateNewDocument = () => {
     const newDocId = uuidV4();
     navigate(`/documents/${newDocId}`);
   };
 
-  // SharedUsers Model stuff
+  // Handle deleting a document
+  const handleDeleteDocument = async (docId) => {
+    try {
+      const response = await axios.delete(`${backendUrl}/documents/${docId}`, {
+        withCredentials: true,
+      });
+
+      // If the document is successfully deleted, update the list
+      setOwnerDocuments(ownerDocuments.filter((doc) => doc._id !== docId));
+      setSharedDocuments(sharedDocuments.filter((doc) => doc._id !== docId));
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      setErrorMessage("An error occurred while deleting the document.");
+    }
+  };
+
+  // Handle opening the modal to add shared users
   const handleOpenModal = (doc) => {
     setCurrentDoc(doc);
     setCurrentSharedUsers(doc.sharedUsers); // Display current shared users
     setShowModal(true);
   };
 
+  // Handle closing the modal
   const handleCloseModal = () => {
     setShowModal(false);
     setSharedUser("");
   };
 
+  // SharedUsers Model stuff
   const addSharedUser = async () => {
     if (!sharedUser) return;
 
@@ -95,26 +113,6 @@ export default function Home() {
     }
   };
 
-  // Handle remove sharedUsers
-  const removeSharedUser = async (username) => {
-    try {
-      await axios.post(
-        `${backendUrl}/documents/${currentDoc._id}/removeSharedUser`,
-        { username },
-        { withCredentials: true }
-      );
-
-      // Update the list of shared users after removal
-      setCurrentSharedUsers(
-        currentSharedUsers.filter((user) => user !== username)
-      );
-    } catch (error) {
-      console.error("Error removing shared user:", error);
-    }
-  };
-
-  // Handle signout
-  // Documentation for button event handling https://react.dev/learn/responding-to-events#reading-props-in-event-handlers
   function SignoutButton() {
     async function onSignout() {
       try {
@@ -161,6 +159,9 @@ export default function Home() {
               </Link>
               <button onClick={() => handleOpenModal(doc)}>
                 Add Shared User
+              </button>
+              <button onClick={() => handleDeleteDocument(doc._id)}>
+                Delete Document
               </button>
             </div>
           ))
