@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import "./TextEditor.css";
 
 // Interval to save document
 const INTERVAL_TO_SAVE = 1000;
@@ -29,6 +30,8 @@ export default function TextEditor() {
   // State to manage socket and Quill instances
   const [socket, setSocket] = useState();
   const [quill, setQuill] = useState();
+  // For future things that need doc data
+  const [documentTitle, setDocumentTitle] = useState("");
 
   // Initialize socket connection
   useEffect(() => {
@@ -91,8 +94,9 @@ export default function TextEditor() {
 
     // Load the document data sent from the server and enable editing
     socket.once("load-document", (document) => {
-      quill.setContents(document);
+      quill.setContents(document.data);
       quill.enable();
+      setDocumentTitle(document.title); // Set document title
     });
 
     // Emit the "get-document" event with the document ID to request data from the server
@@ -132,5 +136,13 @@ export default function TextEditor() {
   }, []);
 
   // Render
-  return <div className="container" ref={wrapperRef}></div>;
+  return (
+    <div className="container">
+      <div className="document-header">
+        <h1 className="docTitle">{documentTitle}</h1>
+      </div>
+
+      <div ref={wrapperRef}></div>
+    </div>
+  );
 }

@@ -5,7 +5,13 @@ async function getOrInitializeDocument(id, username) {
   if (!id) return;
   const document = await Document.findById(id);
   return (
-    document || (await Document.create({ _id: id, data: "", owner: username }))
+    document ||
+    (await Document.create({
+      _id: id,
+      data: "",
+      owner: username,
+      title: "Untitled Document",
+    }))
   );
 }
 
@@ -35,7 +41,7 @@ function setupSocket(io, sessionMiddleware) {
 
       // Join socket to the document and load
       socket.join(docId);
-      socket.emit("load-document", document.data);
+      socket.emit("load-document", document);
 
       // Keep changes updated
       socket.on("send-changes", (data) =>
