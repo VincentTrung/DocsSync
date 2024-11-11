@@ -13,6 +13,11 @@ export default function Home() {
   const [ownerDocuments, setOwnerDocuments] = useState([]);
   const [sharedDocuments, setSharedDocuments] = useState([]);
 
+  const [sharedUser, setSharedUser] = useState("");
+  const [currentDoc, setCurrentDoc] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [currentSharedUsers, setCurrentSharedUsers] = useState([]); // Tracks shared users for selected doc
+
   useEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -62,21 +67,62 @@ export default function Home() {
     navigate(`/documents/${newDocId}`);
   };
 
+  // SharedUsers Model stuff
+  const handleOpenModal = (doc) => {
+    setCurrentDoc(doc);
+    setCurrentSharedUsers(doc.sharedUsers); // Display current shared users
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSharedUser("");
+  };
+
+  const addSharedUser = async () => {
+    if (!sharedUser) return;
+
+    try {
+      const response = await axios.post(
+        `${backendUrl}/documents/${currentDoc._id}/addSharedUser`,
+        { username: sharedUser },
+        { withCredentials: true }
+      );
+      setCurrentSharedUsers([...currentSharedUsers, sharedUser]); // Update list of shared users
+      setSharedUser(""); // Clear input field
+    } catch (error) {
+      console.error("Error adding shared user:", error);
+    }
+  };
+
+  // Handle remove sharedUsers
+  const removeSharedUser = async (username) => {
+    try {
+      await axios.post(
+        `${backendUrl}/documents/${currentDoc._id}/removeSharedUser`,
+        { username },
+        { withCredentials: true }
+      );
+
+      // Update the list of shared users after removal
+      setCurrentSharedUsers(
+        currentSharedUsers.filter((user) => user !== username)
+      );
+    } catch (error) {
+      console.error("Error removing shared user:", error);
+    }
+  };
+
   // Handle signout
   // Documentation for button event handling https://react.dev/learn/responding-to-events#reading-props-in-event-handlers
   function SignoutButton() {
     async function onSignout() {
-      const response = await axios
-        .get(`${backendUrl}/signout`, {
-          withCredentials: true,
-        })
-        .then((response) => {
-          console.log("Signed out successfully: ", response);
-          navigate("/"); //put in backend?
-        })
-        .catch((error) => {
-          console.log("Error signing out: ", error);
-        });
+      try {
+        await axios.get(`${backendUrl}/signout`, { withCredentials: true });
+        navigate("/"); //put in backend?
+      } catch (error) {
+        console.log("Error signing out: ", error);
+      }
     }
 
     return (
@@ -105,16 +151,18 @@ export default function Home() {
       <div className="box-container">
         {ownerDocuments.length > 0 ? (
           ownerDocuments.map((doc) => (
-            <Link
-              to={`/documents/${doc._id}`}
-              key={doc._id}
-              style={{ textDecoration: "none" }}
-            >
-              <div className="boxStyle">
+            <div key={doc._id} className="boxStyle">
+              <Link
+                to={`/documents/${doc._id}`}
+                style={{ textDecoration: "none" }}
+              >
                 <h3>{doc.title || "Untitled Document"}</h3>
                 <p>Owner: {doc.owner}</p>
-              </div>
-            </Link>
+              </Link>
+              <button onClick={() => handleOpenModal(doc)}>
+                Add Shared User
+              </button>
+            </div>
           ))
         ) : (
           <p>No documents found.</p>
@@ -140,6 +188,37 @@ export default function Home() {
           <p>No shared documents found.</p>
         )}
       </div>
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Shared Users for {currentDoc.title || "Untitled Document"}</h3>
+            <input
+              type="text"
+              placeholder="Enter username to share with"
+              value={sharedUser}
+              onChange={(e) => setSharedUser(e.target.value)}
+            />
+            <button onClick={addSharedUser}>Add User</button>
+            <button onClick={handleCloseModal}>Close</button>
+            <h4>Currently Shared Users:</h4>
+            <div className="shared-users-list">
+              {currentSharedUsers.length > 0 ? (
+                currentSharedUsers.map((user, index) => (
+                  <div key={index} className="shared-user-item">
+                    <p>{user}</p>
+                    <button onClick={() => removeSharedUser(user)}>
+                      Remove
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p>No users shared yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,12 @@
     padding: 10px;
     transition: border-color 0.5s ease, background-color 0.2s ease;
   }
+  a:focus,
+  a:active,
+  a:visited {
+    color: inherit; /* ensure the blue hue is gone from text */
+    text-decoration: none;
+  }
 
   .boxStyle:hover {
     border: 2px solid blue;
@@ -73,4 +79,43 @@
 
 .signoutButton {
   margin: 20px;
+}
+
+/* Editings SharedUsers Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  width: 70%;
+  height: 60%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shared-users-list {
+  max-height: 90%;
+  overflow-y: auto;
+  width: 100%;
+  border: 2px solid #c9c9c9;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 4px;
+}
+
+button {
+  margin-top: 10px;
 }
