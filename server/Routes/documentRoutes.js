@@ -3,8 +3,9 @@ const isAuthenticated = require("../Middlewares/isAuthenticated");
 const Document = require("../Models/Document");
 const User = require("../Models/User");
 const router = express.Router();
+const { v4: uuidv4 } = require("uuid"); // generate unique id
 
-// Create a new document with for the current user
+// Get a document for the current user
 router.get("/documents", isAuthenticated, async (req, res) => {
   const username = req.session.username;
   try {
@@ -12,8 +13,7 @@ router.get("/documents", isAuthenticated, async (req, res) => {
     const documents = await Document.find({
       $or: [{ owner: username }, { sharedUsers: username }],
     });
-
-    // Intialize/format doc
+    // format doc
     const formattedDocuments = documents.map((doc) => ({
       _id: doc._id,
       data: doc.data,
@@ -28,6 +28,43 @@ router.get("/documents", isAuthenticated, async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while fetching documents." });
+  }
+});
+
+// Create a new document for the current user
+router.post("/documents", isAuthenticated, async (req, res) => {
+  const { title, data } = req.body;
+  const username = req.session.username;
+
+  try {
+    // Create the new document instance with the current user as the owner
+    const newDocument = new Document({
+      _id: uuidv4(),
+      title: "Untitled Document",
+      data: "",
+      owner: username,
+      sharedUsers: [], // Empty by default
+    });
+
+    // Save the document to generate the _id
+    await newDocument.save();
+
+    // Format the newly created document for the response
+    const formattedDocument = {
+      _id: newDocument._id,
+      data: newDocument.data,
+      title: newDocument.title,
+      owner: newDocument.owner,
+      sharedUsers: newDocument.sharedUsers,
+      isOwner: true,
+      isSharedUser: false,
+    };
+
+    res.status(201).json(formattedDocument);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while creating the document." });
   }
 });
 

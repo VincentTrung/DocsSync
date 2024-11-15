@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // for redirection
 import { io } from "socket.io-client";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
@@ -30,8 +30,9 @@ export default function TextEditor() {
   // State to manage socket and Quill instances
   const [socket, setSocket] = useState();
   const [quill, setQuill] = useState();
-  // For future things that need doc data
   const [documentTitle, setDocumentTitle] = useState("");
+  // To handle redirection
+  const navigate = useNavigate();
 
   // Initialize socket connection
   useEffect(() => {
@@ -103,15 +104,21 @@ export default function TextEditor() {
     socket.emit("get-document", documentId);
   }, [socket, quill, documentId]);
 
-  // Listen for a redirect if unable to access
+  // Listen for a redirect if unable to access (DNE)
   useEffect(() => {
     if (socket == null) return;
 
-    // Redirect if unauthorized access
-    socket.on("redirect", (path) => {
-      window.location.href = path;
+    // Listen for the 'document-not-found' event to disconnect and redirect
+    socket.on("document-not-found", () => {
+      // Redirect to home if document is not found
+      navigate("/home");
+      // disconnect the socket as well
+      socket.disconnect();
     });
-  }, [socket]);
+    return () => {
+      socket.off("document-not-found");
+    };
+  }, [socket, navigate]);
 
   // Set up Quill editor instance and attach it to the wrapper div
   const wrapperRef = useCallback((wrapper) => {

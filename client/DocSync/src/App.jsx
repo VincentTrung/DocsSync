@@ -25,6 +25,9 @@ function App() {
         /> */}
 
         <Route path="/documents/:id" element={<TextEditor />} />
+
+        {/* Catch-all route for unmatched URLs on our domain, redirects to '/' */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

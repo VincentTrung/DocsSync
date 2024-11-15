@@ -1,18 +1,16 @@
 const Document = require("../Models/Document");
 
 // Get or intialize a document if it doesnt exist
-async function getOrInitializeDocument(id, username) {
+async function getDocument(id, username) {
   if (!id) return;
   const document = await Document.findById(id);
-  return (
-    document ||
-    (await Document.create({
-      _id: id,
-      data: "",
-      owner: username,
-      title: "Untitled Document",
-    }))
-  );
+
+  // If no document is found
+  if (!document) {
+    return { id: "" };
+  }
+
+  return document;
 }
 
 // Set up a websocket server using Socket.IO
@@ -28,7 +26,16 @@ function setupSocket(io, sessionMiddleware) {
     socket.on("get-document", async (docId) => {
       const session = socket.request.session;
       const username = session.username;
-      const document = await getOrInitializeDocument(docId, username);
+      const document = await getDocument(docId, username);
+
+      if (!document || document.id === "") {
+        console.log(
+          `Document with ID ${docId} does not exist. Disconnecting socket.`
+        );
+        socket.emit("document-not-found"); // Send this event to frontend
+        socket.disconnect(); // Disconnect the socket
+        return;
+      }
 
       // Redirect to homepage if not authorized
       if (

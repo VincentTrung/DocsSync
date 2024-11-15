@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { v4 as uuidV4 } from "uuid";
 import axios from "axios";
 import "./Home.css";
 
@@ -62,9 +61,20 @@ export default function Home() {
   }, [navigate]);
 
   // Handle Create New Document
-  const handleCreateNewDocument = () => {
-    const newDocId = uuidV4();
-    navigate(`/documents/${newDocId}`);
+  const handleCreateNewDocument = async () => {
+    try {
+      // Send a request to create a new document on the backend
+      const response = await axios.post(
+        `${backendUrl}/documents`,
+        {},
+        { withCredentials: true }
+      );
+
+      const docId = response.data._id;
+      navigate(`/documents/${docId}`);
+    } catch (error) {
+      console.error("Error creating new document:", error);
+    }
   };
 
   // Handle deleting a document

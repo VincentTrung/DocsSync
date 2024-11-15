@@ -29,9 +29,7 @@
     padding: 10px;
     transition: border-color 0.5s ease, background-color 0.2s ease;
   }
-  a:focus,
-  a:active,
-  a:visited {
+  a {
     color: inherit; /* ensure the blue hue is gone from text */
     text-decoration: none;
   }
