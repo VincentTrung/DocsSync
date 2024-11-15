@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // for redirection
+import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
@@ -104,9 +104,16 @@ export default function TextEditor() {
     socket.emit("get-document", documentId);
   }, [socket, quill, documentId]);
 
-  // Listen for a redirect if unable to access (DNE)
+  // Emit title change to server
+  const handleTitleChange = (event) => {
+    const newTitle = event.target.value;
+    setDocumentTitle(newTitle);
+    socket.emit("update-title", newTitle, documentId); // Emit the updated title to the server
+  };
+
+  // Listen for redirect if document not found
   useEffect(() => {
-    if (socket == null) return;
+    if (!socket) return;
 
     // Listen for the 'document-not-found' event to disconnect and redirect
     socket.on("document-not-found", () => {
@@ -142,11 +149,30 @@ export default function TextEditor() {
     setQuill(q);
   }, []);
 
-  // Render
+  // Listen for title updates from the server
+  useEffect(() => {
+    if (!socket) return;
+
+    const handler = (newTitle) => {
+      setDocumentTitle(newTitle); // Update the document title for all connected clients
+    };
+
+    socket.on("document-title-updated", handler);
+
+    return () => {
+      socket.off("document-title-updated", handler);
+    };
+  }, [socket]);
+
   return (
     <div className="container">
       <div className="document-header">
-        <h1 className="docTitle">{documentTitle}</h1>
+        <input
+          type="text"
+          value={documentTitle}
+          onChange={handleTitleChange} // Update title on change
+          className="docTitle"
+        />
       </div>
 
       <div ref={wrapperRef}></div>

@@ -32,6 +32,12 @@
   a {
     color: inherit; /* ensure the blue hue is gone from text */
     text-decoration: none;
+    display: -webkit-box; /* To make sure the text does not overflow too long */
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    overflow: hidden; /* Hide anything over 2 lines */
+    text-overflow: ellipsis; /* Add (...) for overflow */
+    word-wrap: break-word; /* Break text if too long word */
   }
 
   .boxStyle:hover {
