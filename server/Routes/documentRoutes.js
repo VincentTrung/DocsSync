@@ -8,12 +8,18 @@ const { v4: uuidv4 } = require("uuid"); // generate unique id
 // Get a document for the current user
 router.get("/documents", isAuthenticated, async (req, res) => {
   const username = req.session.username;
+  // Pagination
+  const page = parseInt(req.query.page) || 1; // default to 1
+  const limit = 10;
+
   try {
     // Find documents where the user is either owner or sharedUser
     const documents = await Document.find({
       $or: [{ owner: username }, { sharedUsers: username }],
-    });
-    // format doc
+    })
+      .skip((page - 1) * limit)
+      .limit(limit + 1); // Extra one for frontend "next" button
+
     const formattedDocuments = documents.map((doc) => ({
       _id: doc._id,
       data: doc.data,

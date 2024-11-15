@@ -1,6 +1,6 @@
 const Document = require("../Models/Document");
 
-// Get or intialize a document if it doesnt exist
+// Get or initialize a document if it doesn't exist
 async function getDocument(id, username) {
   if (!id) return;
   const document = await Document.findById(id);
@@ -54,11 +54,28 @@ function setupSocket(io, sessionMiddleware) {
       socket.on("send-changes", (data) =>
         socket.broadcast.to(docId).emit("receive-changes", data)
       );
-      // Keep saving the data to db
+
+      // Save the document data to the DB
       socket.on(
         "save-document",
         async (data) => await Document.findByIdAndUpdate(docId, { data })
       );
+
+      // Handle title change and update it in the DB
+      socket.on("update-title", async (newTitle, docId) => {
+        try {
+          const document = await Document.findByIdAndUpdate(
+            docId,
+            { title: newTitle },
+            { new: true } // Return the updated document
+          );
+
+          // Emit the new title to all clients connected to the document
+          io.to(docId).emit("document-title-updated", document.title);
+        } catch (err) {
+          console.error("Error updating title:", err);
+        }
+      });
     });
 
     socket.on("disconnect", () => console.log("A client disconnected"));

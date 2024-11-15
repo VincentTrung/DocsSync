@@ -1,6 +1,19 @@
-.docTitle {
+/* Styles for the document title */
+.document-header {
   display: flex;
   justify-content: center;
+  align-items: center;
+  margin: 10px;
+}
+
+.docTitle {
+  font-size: calc(2vw);
+  font-weight: bold;
+  color: #000000;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   text-align: center;
-  margin-bottom: 20px;
+  text-overflow: ellipsis; /* For overflow */
+  width: fit-content;
 }

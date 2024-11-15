@@ -4,18 +4,84 @@ import axios from "axios";
 import "./Home.css";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const docLimit = 10;
 
 export default function Home() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("Guest");
   const [errorMessage, setErrorMessage] = useState("");
+  // arr of docs
   const [ownerDocuments, setOwnerDocuments] = useState([]);
   const [sharedDocuments, setSharedDocuments] = useState([]);
-
+  // Sharing documents
   const [sharedUser, setSharedUser] = useState("");
   const [currentDoc, setCurrentDoc] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [currentSharedUsers, setCurrentSharedUsers] = useState([]); // Tracks shared users for selected doc
+  // Keep track of docs page
+  const [ownerDocumentsPage, setOwnerDocumentsPage] = useState(1);
+  const [sharedDocumentsPage, setSharedDocumentsPage] = useState(1);
+  // Determines whether to display doc nav buttons
+  const [hasMoreOwnerDocuments, setHasMoreOwnerDocuments] = useState(true);
+  const [hasMoreSharedDocuments, setHasMoreSharedDocuments] = useState(true);
+
+  // Fetching documents with pagination
+  const fetchDocuments = async (ownerPage, sharedPage) => {
+    const limit = docLimit + 1;
+
+    try {
+      const userResponse = await axios.get(`${backendUrl}/session`, {
+        withCredentials: true,
+      });
+      setUsername(userResponse.data.username);
+
+      // Fetch owner documents
+      const ownerDocsResponse = await axios.get(`${backendUrl}/documents`, {
+        params: { page: ownerPage },
+        withCredentials: true,
+      });
+      const ownerDocs = ownerDocsResponse.data.filter(
+        (doc) => doc.owner == userResponse.data.username
+      );
+      setOwnerDocuments(ownerDocs);
+      setHasMoreOwnerDocuments(ownerDocs.length == limit); // Disable if less than limit
+
+      // Fetch shared documents
+      const sharedDocsResponse = await axios.get(`${backendUrl}/documents`, {
+        params: { page: sharedPage },
+        withCredentials: true,
+      });
+      const sharedDocs = sharedDocsResponse.data.filter((doc) =>
+        doc.sharedUsers.includes(userResponse.data.username)
+      );
+      setSharedDocuments(sharedDocs);
+      setHasMoreSharedDocuments(sharedDocs.length == limit); // Disable if less than limit
+    } catch (error) {
+      handleFetchError(error);
+    }
+  };
+
+  // Handle what page the client is on, update based on type
+  const handleNextPage = (type) => {
+    if (type == "owner") {
+      setOwnerDocumentsPage((prevPage) => prevPage + 1);
+    } else if (type == "shared") {
+      setSharedDocumentsPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const handlePreviousPage = (type) => {
+    if (type == "owner" && ownerDocumentsPage > 1) {
+      setOwnerDocumentsPage((prevPage) => prevPage - 1);
+    } else if (type == "shared" && sharedDocumentsPage > 1) {
+      setSharedDocumentsPage((prevPage) => prevPage - 1);
+    }
+  };
+
+  // Call fetchDocuments with the current page numbers
+  useEffect(() => {
+    fetchDocuments(ownerDocumentsPage, sharedDocumentsPage);
+  }, [ownerDocumentsPage, sharedDocumentsPage]);
 
   useEffect(() => {
     const fetchUsername = async () => {
@@ -78,15 +144,37 @@ export default function Home() {
   };
 
   // Handle deleting a document
-  const handleDeleteDocument = async (docId) => {
+  const handleDeleteDocument = async (docId, type) => {
     try {
       const response = await axios.delete(`${backendUrl}/documents/${docId}`, {
         withCredentials: true,
       });
 
-      // If the document is successfully deleted, update the list
-      setOwnerDocuments(ownerDocuments.filter((doc) => doc._id !== docId));
-      setSharedDocuments(sharedDocuments.filter((doc) => doc._id !== docId));
+      // Remove the document from the correct list and update pagination
+      if (type == "owner") {
+        const updatedOwnerDocs = ownerDocuments.filter(
+          (doc) => doc._id !== docId
+        );
+        setOwnerDocuments(updatedOwnerDocs);
+
+        // Check if we need to adjust the page after deletion
+        if (updatedOwnerDocs.length == 0 && ownerDocumentsPage > 1) {
+          setOwnerDocumentsPage((prevPage) => prevPage - 1);
+        } else {
+          fetchDocuments(ownerDocumentsPage, sharedDocumentsPage);
+        }
+      } else if (type == "shared") {
+        const updatedSharedDocs = sharedDocuments.filter(
+          (doc) => doc._id !== docId
+        );
+        setSharedDocuments(updatedSharedDocs);
+
+        if (updatedSharedDocs.length == 0 && sharedDocumentsPage > 1) {
+          setSharedDocumentsPage((prevPage) => prevPage - 1);
+        } else {
+          fetchDocuments(ownerDocumentsPage, sharedDocumentsPage);
+        }
+      }
     } catch (error) {
       console.error("Error deleting document:", error);
       setErrorMessage("An error occurred while deleting the document.");
@@ -158,7 +246,7 @@ export default function Home() {
       <h2>Your Documents:</h2>
       <div className="box-container">
         {ownerDocuments.length > 0 ? (
-          ownerDocuments.map((doc) => (
+          ownerDocuments.slice(0, docLimit).map((doc) => (
             <div key={doc._id} className="boxStyle">
               <Link
                 to={`/documents/${doc._id}`}
@@ -170,7 +258,7 @@ export default function Home() {
               <button onClick={() => handleOpenModal(doc)}>
                 Add Shared User
               </button>
-              <button onClick={() => handleDeleteDocument(doc._id)}>
+              <button onClick={() => handleDeleteDocument(doc._id, "owner")}>
                 Delete Document
               </button>
             </div>
@@ -178,12 +266,27 @@ export default function Home() {
         ) : (
           <p>No documents found.</p>
         )}
+        <div className="pagination-controls">
+          <button
+            onClick={() => handlePreviousPage("owner")}
+            disabled={ownerDocumentsPage == 1}
+          >
+            Previous
+          </button>
+          <span>Page {ownerDocumentsPage}</span>
+          <button
+            onClick={() => handleNextPage("owner")}
+            disabled={!hasMoreOwnerDocuments}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       <h2>Shared Documents:</h2>
       <div className="box-container">
         {sharedDocuments.length > 0 ? (
-          sharedDocuments.map((doc) => (
+          sharedDocuments.slice(0, docLimit).map((doc) => (
             <Link
               to={`/documents/${doc._id}`}
               key={doc._id}
@@ -198,6 +301,21 @@ export default function Home() {
         ) : (
           <p>No shared documents found.</p>
         )}
+        <div className="pagination-controls">
+          <button
+            onClick={() => handlePreviousPage("shared")}
+            disabled={sharedDocumentsPage == 1}
+          >
+            Previous
+          </button>
+          <span>Page {sharedDocumentsPage}</span>
+          <button
+            onClick={() => handleNextPage("shared")}
+            disabled={!hasMoreSharedDocuments}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {showModal && (
