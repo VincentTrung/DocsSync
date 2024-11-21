@@ -24,6 +24,23 @@ const TOOLBAR_OPTION = [
   ["clean"],
 ];
 
+function generateColor(username) {
+  const palette = [
+    "#FF0000", // Red
+    "#008000", // Green
+    "#0000ff", // Blue
+    "#Ffc0cb", // Pink
+    "#FFD133", // Yellow
+    "#33FFF0", // Cyan
+  ];
+  // hash to get a new colour
+  const hash = username
+    .split("") // Convert/remove quotes
+    //acc=0 starting value, hash username
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return palette[hash % palette.length]; //ex 399%6=3 etc
+}
+
 export default function TextEditor() {
   // Extract document ID from the URL parameters
   const { id: documentId } = useParams();
@@ -34,6 +51,14 @@ export default function TextEditor() {
   // To handle redirection
   const navigate = useNavigate();
 
+  // Track the clients cursor data
+  const [userId, setUserId] = useState(null);
+  const [cursorPosition, setCursorPosition] = useState(null);
+
+  // Track other clients on the doc
+  const [userCursors, setUserCursors] = useState([]);
+  const [activeUsers, setActiveUsers] = useState([]);
+
   // Initialize socket connection
   useEffect(() => {
     // connecting to the backend of socket.io server
@@ -41,6 +66,13 @@ export default function TextEditor() {
       withCredentials: true, // Ensures session cookies are sent
     });
     setSocket(s);
+
+    // Get the userId from the server
+    s.emit("request-user-info");
+    // Listen for the user-info event. Need username later
+    s.on("user-info", ({ id }) => {
+      setUserId(id);
+    });
 
     // Clean up/Disconnecting
     return () => {
@@ -67,6 +99,13 @@ export default function TextEditor() {
     const handler = (dataChange, oldDataChange, source) => {
       if (source !== "user") return;
       socket.emit("send-changes", dataChange);
+
+      // Track other clients cursors
+      const range = quill.getSelection();
+      if (range) {
+        setCursorPosition(range.index);
+        socket.emit("update-cursor", documentId, range.index);
+      }
     };
     quill.on("text-change", handler);
 
@@ -98,6 +137,9 @@ export default function TextEditor() {
       quill.setContents(document.data);
       quill.enable();
       setDocumentTitle(document.title); // Set document title
+
+      // Emit/load everyones name/positions on page load
+      socket.emit("update-cursor", documentId, 0);
     });
 
     // Emit the "get-document" event with the document ID to request data from the server
@@ -164,6 +206,102 @@ export default function TextEditor() {
     };
   }, [socket]);
 
+  // Track clients cursor position
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const handler = (range) => {
+      if (range) {
+        setCursorPosition(range.index);
+        if (socket) socket.emit("update-cursor", documentId, range.index);
+      }
+    };
+    quill.on("selection-change", handler);
+    // Emit an initial cursor position
+    socket?.emit("update-cursor", documentId, 0);
+
+    return () => {
+      quill.off("selection-change", handler);
+    };
+  }, [quill, socket, documentId]);
+
+  // Handle incoming cursor data from server (from other clients)
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const handler = (cursors) => {
+      // Exclude the client's cursor by filtering out its userId
+      const filteredCursors = cursors.filter(
+        (cursor) => cursor.userId != userId
+      );
+
+      const uniqueCursors = Array.from(
+        new Map(
+          cursors
+            .filter((cursor) => cursor.userId !== userId) // exclude current client
+            .map((cursor) => [cursor.userId, cursor]) // remove duplicates
+        ).values()
+      );
+      // Set to be used for displaying cursors/names
+      setUserCursors(filteredCursors);
+      setActiveUsers(uniqueCursors);
+    };
+
+    socket.on("receive-cursors", handler);
+    return () => {
+      socket.off("receive-cursors", handler);
+    };
+  }, [socket, quill, userId]);
+
+  // TO render cursors
+  useEffect(() => {
+    if (!quill) return;
+
+    // Create container and attach to quill
+    const cursorsLayer = document.createElement("div");
+    cursorsLayer.className = "cursors-layer";
+    quill.container.appendChild(cursorsLayer);
+
+    // Function to update and render user cursors
+    const updateCursors = () => {
+      cursorsLayer.innerHTML = ""; // Clear existing cursors
+
+      userCursors.forEach(({ userId, cursorIndex }) => {
+        // Fix the scaling issues with different fonts
+        const bounds = quill.getBounds(cursorIndex); // Get position bounds in Quill
+
+        // Get the header types at the cursor position
+        const formats = quill.getFormat(cursorIndex);
+        const headerLevel = formats.header || null;
+
+        // Adjust cursor height based on header level
+        let cursorHeight;
+        if (headerLevel) {
+          cursorHeight = 20 + (6 - headerLevel) * 5; // Adjust values from 1-6
+        } else {
+          cursorHeight = 16; // Default height for non-header text
+        }
+
+        // Cursor properties
+        const cursorEl = document.createElement("div");
+        cursorEl.className = "cursor-indicator";
+        cursorEl.style.position = "absolute";
+        cursorEl.style.backgroundColor = generateColor(userId);
+        cursorEl.style.width = "1.5px"; // Cursor width remains the same
+        cursorEl.style.height = `${cursorHeight}px`;
+        cursorEl.style.left = `${bounds.left - 2}px`;
+        cursorEl.style.top = `${bounds.top}px`;
+
+        cursorsLayer.appendChild(cursorEl); // Append the cursor to the layer
+      });
+    };
+    updateCursors(); // Initial render
+
+    return () => {
+      cursorsLayer.remove();
+    };
+  }, [quill, userCursors]);
+
   return (
     <div className="container">
       <div className="document-header">
@@ -173,6 +311,19 @@ export default function TextEditor() {
           onChange={handleTitleChange} // Update title on change
           className="docTitle"
         />
+        <div className="active-users">
+          <h3>Active Document Editors</h3>
+          <ul>
+            {activeUsers.map((cursor) => (
+              <li
+                key={cursor.userId}
+                style={{ color: generateColor(cursor.userId) }}
+              >
+                {cursor.userId}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       <div ref={wrapperRef}></div>

@@ -35,6 +35,7 @@
     display: -webkit-box; /* To make sure the text does not overflow too long */
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2; /* Limit to 2 lines */
+    line-clamp: 2; /* Standard property? */
     overflow: hidden; /* Hide anything over 2 lines */
     text-overflow: ellipsis; /* Add (...) for overflow */
     word-wrap: break-word; /* Break text if too long word */

@@ -22,10 +22,38 @@ function setupSocket(io, sessionMiddleware) {
   io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} connected`);
 
+    const connectedUsers = new Set(); // set of users
+    // Notify all clients of the updated user list
+    const broadcastActiveUsers = () => {
+      const users = Array.from(connectedUsers).map(({ id, username }) => ({
+        id,
+        username,
+      }));
+      io.emit("active-users", users);
+    };
+
+    // Return username
+    socket.on("request-user-info", () => {
+      const username = socket.request.session.username;
+      // console.log("Username from session:", username);
+      if (username) {
+        socket.emit("user-info", { id: username });
+      }
+    });
+
     // Listen for the "get-document" event from client
     socket.on("get-document", async (docId) => {
       const session = socket.request.session;
       const username = session.username;
+
+      // Store cursor positions for the document
+      if (!io.cursorPositions) {
+        io.cursorPositions = {};
+      }
+      if (!io.cursorPositions[docId]) {
+        io.cursorPositions[docId] = {};
+      }
+
       const document = await getDocument(docId, username);
 
       if (!document || document.id === "") {
@@ -49,6 +77,18 @@ function setupSocket(io, sessionMiddleware) {
       // Join socket to the document and load
       socket.join(docId);
       socket.emit("load-document", document);
+
+      // Broadcast cursor updates
+      socket.on("update-cursor", (docId, cursorIndex) => {
+        io.cursorPositions[docId][socket.id] = {
+          userId: username,
+          cursorIndex,
+        };
+
+        // Broadcast updated cursor positions to all users in the document
+        const cursorData = Object.values(io.cursorPositions[docId]);
+        io.to(docId).emit("receive-cursors", cursorData);
+      });
 
       // Keep changes updated
       socket.on("send-changes", (data) =>
@@ -76,9 +116,19 @@ function setupSocket(io, sessionMiddleware) {
           console.error("Error updating title:", err);
         }
       });
-    });
 
-    socket.on("disconnect", () => console.log("A client disconnected"));
+      // Remove cursor on disconnect
+      socket.on("disconnect", () => {
+        console.log("A client disconnected");
+        if (io.cursorPositions[docId]) {
+          delete io.cursorPositions[docId][socket.id];
+          const cursorData = Object.values(io.cursorPositions[docId]);
+          io.to(docId).emit("receive-cursors", cursorData); // Update remaining clients
+        }
+        connectedUsers.delete(socket.id);
+        broadcastActiveUsers();
+      });
+    });
   });
 }
 
