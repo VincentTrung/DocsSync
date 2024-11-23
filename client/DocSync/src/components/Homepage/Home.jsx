@@ -34,6 +34,7 @@ export default function Home() {
         withCredentials: true,
       });
       setUsername(userResponse.data.username);
+      console.log("+++++", userResponse.data.username);
 
       // Fetch owner documents
       const ownerDocsResponse = await axios.get(`${backendUrl}/documents`, {
@@ -57,7 +58,7 @@ export default function Home() {
       setSharedDocuments(sharedDocs);
       setHasMoreSharedDocuments(sharedDocs.length == limit); // Disable if less than limit
     } catch (error) {
-      handleFetchError(error);
+      console.log(error.message);
     }
   };
 
