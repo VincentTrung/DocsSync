@@ -219,7 +219,6 @@ export default function Home() {
         const response = await axios.get(`${backendUrl}/loginMethod`, {withCredentials: true});
         const googleAuthenticated = response.data.loginMethod;
         if(googleAuthenticated == "google") {
-          console.log("-----googlelogout called");
           googleLogout();
         }
         await axios.get(`${backendUrl}/signout`, { withCredentials: true });

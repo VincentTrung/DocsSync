@@ -51,9 +51,6 @@ router.post("/googleSignin", async(req, res) => {
   const user = req.body.user;
   const email = user.email;
   const username = user.name;
-  console.log("user: ", user);
-  console.log("email: ", email);
-  console.log("username: ", username);
   
   // CORS
   res.header("Access-Control-Allow-Origin", frontendUrl);
@@ -66,22 +63,18 @@ router.post("/googleSignin", async(req, res) => {
   
   // Signup/Login Google user
   const inDatabase = await User.findOne({ username: email });
-  console.log(inDatabase);
   try {
     if(!inDatabase) {
       const hashedPassword = await bcrypt.hash('', 10);
       const newUser = new User({ username: email, password: hashedPassword });
       await newUser.save();
-      console.log("creating google user: ", email);
     }
     req.session.username = username;
     req.session.loginMethod = 'google';
 
-    console.log(req.session.username, "+++", username);
     return res.json({ status: "success", username: username });
   }
   catch (error) {
-    console.log("goog error: ", error);
     return res.status(500).json({status: "error", message: "Something went wrong in server during Google Auth"});
   }
 });

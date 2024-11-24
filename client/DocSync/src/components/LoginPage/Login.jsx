@@ -67,11 +67,9 @@ export default function Login() {
   }
 
   const handleGoogleSuccess = async (credentialResponse) => {
-    console.log("login with goog success");
 
     const googleToken = credentialResponse.credential;
     const user = decodeToken(googleToken);
-    console.log("user email: ", user.email);
 
     try {
       const response = await axios.post(
@@ -81,14 +79,12 @@ export default function Login() {
       );
 
       if(response.data.status == "success" || response.data.status == "created") {
-        console.log("session username: ", response.data.username);
         navigate("/home", { state: { username: response.data.username } }); // Pass username to the next route
       } else {
         setErrorMessage("Login failed, " + response.data.message);
       }
     }
     catch (error) {
-      // setErrorMessage(error.response.message);
       setErrorMessage(error.message);
     }
   };
