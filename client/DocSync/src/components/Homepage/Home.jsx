@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Home.css";
+import { googleLogout } from "@react-oauth/google";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const docLimit = 10;
@@ -215,6 +216,12 @@ export default function Home() {
   function SignoutButton() {
     async function onSignout() {
       try {
+        const response = await axios.get(`${backendUrl}/loginMethod`, {withCredentials: true});
+        const googleAuthenticated = response.data.loginMethod;
+        if(googleAuthenticated == "google") {
+          console.log("-----googlelogout called");
+          googleLogout();
+        }
         await axios.get(`${backendUrl}/signout`, { withCredentials: true });
         navigate("/"); //put in backend?
       } catch (error) {

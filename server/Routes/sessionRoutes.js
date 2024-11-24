@@ -12,6 +12,11 @@ router.get("/session", isAuthenticated, (req, res) => {
   res.json({ username: req.session.username });
 });
 
+// Get loginMethod of current session
+router.get("/loginMethod", isAuthenticated, (req, res) => {
+  res.json({ loginMethod: req.session.loginMethod });
+});
+
 // Signout
 router.get("/signout", isAuthenticated, (req, res) => {
   req.session.destroy((error) => {
