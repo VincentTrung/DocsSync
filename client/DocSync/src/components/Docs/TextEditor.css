@@ -49,3 +49,28 @@
   margin: 4px;
   font-size: 14px;
 }
+
+.video-call-container {
+  display: flex;
+  overflow-x: auto; /* scrolling */
+  background-color: #a3a3a3;
+  padding: 10px;
+}
+
+.my-video video {
+  border: 5px solid #000000;
+  border-radius: 8px;
+  width: 130px;
+  height: 100px;
+  margin-right: 10px;
+  margin-left: 10px;
+  background-color: #000000;
+}
+
+.peer-video video {
+  border: 1px solid #dedede;
+  border-radius: 8px;
+  width: 130px;
+  height: 100px;
+  margin-right: 10px;
+}

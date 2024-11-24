@@ -46,6 +46,30 @@ function setupSocket(io, sessionMiddleware) {
       const session = socket.request.session;
       const username = session.username;
 
+      // Emit when a user joins the VIDEO CALL //
+      socket.on("join-video-call", ({ docId, peerId }) => {
+        console.log(
+          `${username} ${peerId} joined the video call for document ${docId}`
+        );
+        socket.join(docId); // Join room based on document ID
+        io.to(docId).emit("new-peer", peerId, docId, username); //send the username of socket
+      });
+
+      // For Tracking active users
+      socket.on("disconnect", () => {
+        console.log(`Socket ${socket.id} disconnected`);
+        connectedUsers.delete(socket.id);
+        broadcastActiveUsers();
+      });
+
+      // Event when a peer disconnects (client emitted 'peer-disconnected')
+      socket.on("peer-disconnected", (peerId) => {
+        console.log(`Peer ${peerId} has disconnected`);
+
+        // Broadcasting to all other peers
+        io.to(docId).emit("peer-disconnected", peerId);
+      });
+
       // Store cursor positions for the document
       if (!io.cursorPositions) {
         io.cursorPositions = {};
