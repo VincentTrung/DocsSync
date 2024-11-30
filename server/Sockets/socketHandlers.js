@@ -9,81 +9,71 @@ async function getDocument(id, username) {
   if (!document) {
     return { id: "" };
   }
-
   return document;
 }
 
 // Set up a websocket server using Socket.IO
 function setupSocket(io, sessionMiddleware) {
-  io.use((socket, next) => {
+  // Use namespaces to work with loadbalancer (Thanks Thierry for suggestion)
+  const namespace = io.of("/socket");
+
+  namespace.use((socket, next) => {
     sessionMiddleware(socket.request, {}, next);
   });
 
-  io.on("connection", (socket) => {
-    console.log(`Socket ${socket.id} connected`);
+  // Listen for connections in the "/socket" namespace
+  namespace.on("connection", (socket) => {
+    console.log(`Socket ${socket.id} connected in '/socket' namespace`);
 
-    const connectedUsers = new Set(); // set of users
-    // Notify all clients of the updated user list
-    const broadcastActiveUsers = () => {
-      const users = Array.from(connectedUsers).map(({ id, username }) => ({
-        id,
-        username,
-      }));
-      io.emit("active-users", users);
-    };
+    // intialize a set of ACTIVE USERS
+    const connectedUsers = new Set();
 
-    // Return username
+    // Return username on request
     socket.on("request-user-info", () => {
       const username = socket.request.session.username;
-      // console.log("Username from session:", username);
       if (username) {
         socket.emit("user-info", { id: username });
       }
     });
 
-    // Listen for the "get-document" event from client
+    // Listen for the "get-document" (grabs doc id and handles doc functions)
     socket.on("get-document", async (docId) => {
       const session = socket.request.session;
       const username = session.username;
 
       // Emit when a user joins the VIDEO CALL //
       socket.on("join-video-call", ({ docId, peerId }) => {
-        console.log(
-          `${username} ${peerId} joined the video call for document ${docId}`
-        );
+        console.log(`${username} ${peerId} joined the video call for ${docId}`);
         socket.join(docId); // Join room based on document ID
-        io.to(docId).emit("new-peer", peerId, docId, username); //send the username of socket
+        namespace.to(docId).emit("new-peer", peerId, docId, username); // send the username of socket
       });
 
-      // For Tracking active users
+      // Event when a peer disconnects VIDEO (client emitted 'peer-disconnected')
+      socket.on("peer-disconnected", (peerId) => {
+        console.log(`Peer ${peerId} has disconnected`);
+        // Broadcasting to all other peers
+        namespace.to(docId).emit("peer-disconnected", peerId);
+      });
+
+      // For Tracking ACTIVE USERS on doc
       socket.on("disconnect", () => {
         console.log(`Socket ${socket.id} disconnected`);
         connectedUsers.delete(socket.id);
-        broadcastActiveUsers();
       });
 
-      // Event when a peer disconnects (client emitted 'peer-disconnected')
-      socket.on("peer-disconnected", (peerId) => {
-        console.log(`Peer ${peerId} has disconnected`);
-
-        // Broadcasting to all other peers
-        io.to(docId).emit("peer-disconnected", peerId);
-      });
-
-      // Store cursor positions for the document
-      if (!io.cursorPositions) {
-        io.cursorPositions = {};
+      // set cursor positions for the document
+      if (!namespace.cursorPositions) {
+        namespace.cursorPositions = {};
       }
-      if (!io.cursorPositions[docId]) {
-        io.cursorPositions[docId] = {};
+      if (!namespace.cursorPositions[docId]) {
+        namespace.cursorPositions[docId] = {};
       }
 
+      // Retrieve document/data
       const document = await getDocument(docId, username);
 
       if (!document || document.id === "") {
-        console.log(
-          `Document with ID ${docId} does not exist. Disconnecting socket.`
-        );
+        console.log(`Document with ID ${docId} DNE. Disconnecting socket.`);
         socket.emit("document-not-found"); // Send this event to frontend
         socket.disconnect(); // Disconnect the socket
         return;
@@ -104,14 +94,14 @@ function setupSocket(io, sessionMiddleware) {
 
       // Broadcast cursor updates
       socket.on("update-cursor", (docId, cursorIndex) => {
-        io.cursorPositions[docId][socket.id] = {
+        namespace.cursorPositions[docId][socket.id] = {
           userId: username,
           cursorIndex,
         };
 
         // Broadcast updated cursor positions to all users in the document
-        const cursorData = Object.values(io.cursorPositions[docId]);
-        io.to(docId).emit("receive-cursors", cursorData);
+        const cursorData = Object.values(namespace.cursorPositions[docId]);
+        namespace.to(docId).emit("receive-cursors", cursorData);
       });
 
       // Keep changes updated
@@ -135,7 +125,7 @@ function setupSocket(io, sessionMiddleware) {
           );
 
           // Emit the new title to all clients connected to the document
-          io.to(docId).emit("document-title-updated", document.title);
+          namespace.to(docId).emit("document-title-updated", document.title);
         } catch (err) {
           console.error("Error updating title:", err);
         }
@@ -144,13 +134,12 @@ function setupSocket(io, sessionMiddleware) {
       // Remove cursor on disconnect
       socket.on("disconnect", () => {
         console.log("A client disconnected");
-        if (io.cursorPositions[docId]) {
-          delete io.cursorPositions[docId][socket.id];
-          const cursorData = Object.values(io.cursorPositions[docId]);
-          io.to(docId).emit("receive-cursors", cursorData); // Update remaining clients
+        if (namespace.cursorPositions[docId]) {
+          delete namespace.cursorPositions[docId][socket.id];
+          const cursorData = Object.values(namespace.cursorPositions[docId]);
+          namespace.to(docId).emit("receive-cursors", cursorData); // Update remaining clients
         }
         connectedUsers.delete(socket.id);
-        broadcastActiveUsers();
       });
     });
   });

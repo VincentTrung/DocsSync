@@ -2,14 +2,12 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import Quill from "quill";
+import Peer from "peerjs";
 import "quill/dist/quill.snow.css";
 import "./TextEditor.css";
 
-import Peer from "peerjs"; // Import PeerJS
-
 // Interval to save document
 const INTERVAL_TO_SAVE = 1000;
-// Socket connection
 const socketUrl = import.meta.env.VITE_SOCKET_URL;
 
 // QUILL //
@@ -26,6 +24,7 @@ const TOOLBAR_OPTION = [
   ["clean"],
 ];
 
+// hash function for assigning users colours
 function generateColor(username) {
   const palette = [
     "#FF0000", // Red
@@ -35,7 +34,6 @@ function generateColor(username) {
     "#FFD133", // Yellow
     "#33FFF0", // Cyan
   ];
-  // hash to get a new colour
   const hash = username
     .split("") // Convert/remove quotes
     //acc=0 starting value, hash username
@@ -44,14 +42,13 @@ function generateColor(username) {
 }
 
 export default function TextEditor() {
+  const navigate = useNavigate(); // To handle redirection
   // Extract document ID from the URL parameters
   const { id: documentId } = useParams();
   // State to manage socket and Quill instances
   const [socket, setSocket] = useState();
   const [quill, setQuill] = useState();
   const [documentTitle, setDocumentTitle] = useState("");
-  // To handle redirection
-  const navigate = useNavigate();
 
   // Track the clients cursor data
   const [userId, setUserId] = useState(null);
