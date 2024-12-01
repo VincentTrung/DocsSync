@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import Quill from "quill";
+import Peer from "peerjs";
 import "quill/dist/quill.snow.css";
 import "./TextEditor.css";
 
 // Interval to save document
 const INTERVAL_TO_SAVE = 1000;
-// Socket connection
 const socketUrl = import.meta.env.VITE_SOCKET_URL;
 
 // QUILL //
@@ -24,6 +24,7 @@ const TOOLBAR_OPTION = [
   ["clean"],
 ];
 
+// hash function for assigning users colours
 function generateColor(username) {
   const palette = [
     "#FF0000", // Red
@@ -33,7 +34,6 @@ function generateColor(username) {
     "#FFD133", // Yellow
     "#33FFF0", // Cyan
   ];
-  // hash to get a new colour
   const hash = username
     .split("") // Convert/remove quotes
     //acc=0 starting value, hash username
@@ -42,14 +42,13 @@ function generateColor(username) {
 }
 
 export default function TextEditor() {
+  const navigate = useNavigate(); // To handle redirection
   // Extract document ID from the URL parameters
   const { id: documentId } = useParams();
   // State to manage socket and Quill instances
   const [socket, setSocket] = useState();
   const [quill, setQuill] = useState();
   const [documentTitle, setDocumentTitle] = useState("");
-  // To handle redirection
-  const navigate = useNavigate();
 
   // Track the clients cursor data
   const [userId, setUserId] = useState(null);
@@ -58,6 +57,169 @@ export default function TextEditor() {
   // Track other clients on the doc
   const [userCursors, setUserCursors] = useState([]);
   const [activeUsers, setActiveUsers] = useState([]);
+
+  // VIDEO CALLING STUFF MAYBE MOVE TO NEW FILE //
+  // Video Calling
+  const [peer, setPeer] = useState(null); // PeerJS peer instance
+  const [myStream, setMyStream] = useState(null); // Local stream
+  const [otherPeers, setOtherPeers] = useState([]); // List of other peer IDs for video call
+  const [videoCallEnabled, setVideoCallEnabled] = useState(false); // Toggle for video calling
+
+  const userVideoRef = useRef();
+
+  // If user intiated call, then create call
+  useEffect(() => {
+    if (videoCallEnabled) {
+      const peer = new Peer(); // Create a PeerJS instance
+      setPeer(peer);
+
+      peer.on("open", (id) => {
+        socket.emit("join-video-call", {
+          docId: documentId,
+          peerId: id,
+        });
+      });
+
+      // Get my media stream (video and audio)
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((stream) => {
+          setMyStream(stream);
+          if (userVideoRef.current) {
+            userVideoRef.current.srcObject = stream;
+          }
+        })
+        .catch((err) => console.log("Failed to get media:", err));
+
+      return () => {
+        // Cleanup
+        peer.destroy(); // Clean up PeerJS instance
+        setPeer(null);
+        if (myStream) {
+          myStream.getTracks().forEach((track) => track.stop()); // Stop media stream
+          setMyStream(null);
+        }
+        setOtherPeers([]); // Clear other peers
+      };
+    } else {
+      // Disable video call: clean up media stream and PeerJS
+      if (peer) peer.destroy();
+      setPeer(null);
+      if (myStream) {
+        myStream.getTracks().forEach((track) => track.stop());
+        setMyStream(null);
+      }
+      setOtherPeers([]); // Clear other peers
+    }
+  }, [videoCallEnabled]);
+
+  // Listen for new peers joining the call
+  useEffect(() => {
+    if (socket == null || peer == null) return;
+
+    // Listen for new peers connecting to the call
+    const handleNewPeer = (newPeerId, docId, usernameId) => {
+      if (docId == documentId && myStream) {
+        // Initiate a call to the new peer with the correct username metadata
+        const call = peer.call(newPeerId, myStream, {
+          metadata: { username: userId }, // Ensure correct username
+        });
+
+        // add the peers to list of peer streams
+        call.on("stream", (stream) => {
+          setOtherPeers((prev) => {
+            if (!prev.some((peerData) => peerData.stream.id == stream.id)) {
+              return [
+                ...prev,
+                {
+                  stream,
+                  peerId: newPeerId,
+                  username: usernameId, // grab username of peer
+                },
+              ];
+            }
+            return prev;
+          });
+        });
+
+        call.on("close", () => {
+          // Only keep active and not myStream
+          setOtherPeers((prev) =>
+            prev
+              .filter((peerData) => peerData.peerId != newPeerId)
+              .filter((peerData) => peerData.stream.active)
+          );
+        });
+      }
+    };
+    // listener is always active for each peer
+    socket.on("new-peer", handleNewPeer);
+    return () => {
+      socket.off("new-peer", handleNewPeer);
+    };
+  }, [socket, peer, myStream, documentId]);
+
+  // If the peer connection is active, keep open to listen for new peers
+  useEffect(() => {
+    if (peer == null) return;
+
+    peer.on("call", (call) => {
+      //console.log("Incoming call from:", call.peer);
+      call.answer(myStream); // Answer the call with your local stream
+
+      call.on("stream", (stream) => {
+        setOtherPeers((prev) => {
+          // Add the incoming stream with its associated username and peer ID
+          if (!prev.some((peerData) => peerData.stream.id == stream.id)) {
+            return [
+              ...prev,
+              { stream, peerId: call.peer, username: call.metadata?.username },
+            ];
+          }
+          return prev;
+        });
+
+        // Remove inactive streams
+        setOtherPeers((prevPeers) =>
+          prevPeers.filter((peerData) => peerData.stream.active)
+        );
+      });
+
+      call.on("close", () => {
+        //console.log("Call with peer closed:", call.peer);
+        socket.emit("peer-disconnected", call.peer);
+      });
+    });
+
+    return () => {
+      peer.off("call");
+    };
+  }, [peer, myStream]);
+
+  // Detect when a peer disconnects or goes inactive by leaving
+  useEffect(() => {
+    if (socket == null || peer == null) return;
+
+    // Handle peer disconnection
+    const handlePeerDisconnect = (peerId) => {
+      console.log("Peer disconnected:", peerId);
+
+      setOtherPeers((prev) =>
+        prev.map((peerStream) =>
+          peerStream.id == peerId
+            ? { ...peerStream, active: false }
+            : peerStream
+        )
+      );
+    };
+
+    socket.on("peer-disconnected", handlePeerDisconnect);
+    return () => {
+      socket.off("peer-disconnected", handlePeerDisconnect);
+    };
+  }, [socket, peer]);
+
+  // END OF VIDEO CALLING STUFF TO MOVE //
 
   // Initialize socket connection
   useEffect(() => {
@@ -97,7 +259,7 @@ export default function TextEditor() {
     if (socket == null || quill == null) return;
 
     const handler = (dataChange, oldDataChange, source) => {
-      if (source !== "user") return;
+      if (source != "user") return;
       socket.emit("send-changes", dataChange);
 
       // Track other clients cursors
@@ -302,8 +464,45 @@ export default function TextEditor() {
     };
   }, [quill, userCursors]);
 
+  // console.log(myStream?.id);
+  // console.log(otherPeers);
+
   return (
     <div className="container">
+      <div className="video-call-container">
+        <div className="video-call-toggle">
+          <button onClick={() => setVideoCallEnabled((prev) => !prev)}>
+            {videoCallEnabled ? "Disable Video Call" : "Enable Video Call"}
+          </button>
+        </div>
+        <div className="my-video">
+          {videoCallEnabled ? (
+            <>
+              <video ref={userVideoRef} autoPlay muted />
+              <p className="myUsername">{userId}</p>
+            </>
+          ) : null}
+        </div>
+        {otherPeers
+          .filter(
+            (peerData) =>
+              peerData.stream.id != myStream?.id &&
+              peerData.stream.active == true
+          )
+          .map((peerData, index) => (
+            <div key={peerData.peerId || index} className="peer-video">
+              <video
+                autoPlay
+                ref={(video) => {
+                  if (video && video.srcObject != peerData.stream) {
+                    video.srcObject = peerData.stream;
+                  }
+                }}
+              ></video>
+              <p className="username">{peerData.username}</p>
+            </div>
+          ))}
+      </div>
       <div className="document-header">
         <input
           type="text"

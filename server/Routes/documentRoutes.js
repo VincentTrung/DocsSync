@@ -6,7 +6,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require("uuid"); // generate unique id
 
 // Get a document for the current user
-router.get("/documents", isAuthenticated, async (req, res) => {
+router.get("/api/documents", isAuthenticated, async (req, res) => {
   const username = req.session.username;
   // Pagination
   const page = parseInt(req.query.page) || 1; // default to 1
@@ -38,7 +38,7 @@ router.get("/documents", isAuthenticated, async (req, res) => {
 });
 
 // Create a new document for the current user
-router.post("/documents", isAuthenticated, async (req, res) => {
+router.post("/api/documents", isAuthenticated, async (req, res) => {
   const { title, data } = req.body;
   const username = req.session.username;
 
@@ -76,7 +76,7 @@ router.post("/documents", isAuthenticated, async (req, res) => {
 
 // Add Shared User to a Document
 router.post(
-  "/documents/:documentId/addSharedUser",
+  "/api/documents/:documentId/addSharedUser",
   isAuthenticated,
   async (req, res) => {
     const { documentId } = req.params;
@@ -126,7 +126,7 @@ router.post(
 
 // Remove Shared User from a Document
 router.post(
-  "/documents/:documentId/removeSharedUser",
+  "/api/documents/:documentId/removeSharedUser",
   isAuthenticated,
   async (req, res) => {
     const { documentId } = req.params;
@@ -170,7 +170,7 @@ router.post(
 );
 
 // Delete a document only if the current user is the owner
-router.delete("/documents/:id", isAuthenticated, async (req, res) => {
+router.delete("/api/documents/:id", isAuthenticated, async (req, res) => {
   const { id } = req.params;
   const username = req.session.username;
 

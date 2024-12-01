@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 Dockerfile
+
+# Ignore package-lock.json files
+**/package-lock.json

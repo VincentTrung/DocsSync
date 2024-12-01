@@ -59,7 +59,7 @@ export default function Home() {
       setSharedDocuments(sharedDocs);
       setHasMoreSharedDocuments(sharedDocs.length == limit); // Disable if less than limit
     } catch (error) {
-      console.log(error.message);
+      console.log(error);
     }
   };
 
