@@ -216,9 +216,11 @@ export default function Home() {
   function SignoutButton() {
     async function onSignout() {
       try {
-        const response = await axios.get(`${backendUrl}/loginMethod`, {withCredentials: true});
+        const response = await axios.get(`${backendUrl}/loginMethod`, {
+          withCredentials: true,
+        });
         const googleAuthenticated = response.data.loginMethod;
-        if(googleAuthenticated == "google") {
+        if (googleAuthenticated == "google") {
           googleLogout();
         }
         await axios.get(`${backendUrl}/signout`, { withCredentials: true });

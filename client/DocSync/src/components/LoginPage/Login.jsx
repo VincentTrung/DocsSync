@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import "./Login.css";
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from "@react-oauth/google";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -54,20 +54,25 @@ export default function Login() {
       }
     }
   };
-  
+
   // Following code from: https://stackoverflow.com/questions/38552003/how-to-decode-jwt-token-in-javascript-without-using-a-library
   function decodeToken(token) {
-    let base64Url = token.split('.')[1];
-    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    let jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-  
+    let base64Url = token.split(".")[1];
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    let jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
     return JSON.parse(jsonPayload);
   }
 
   const handleGoogleSuccess = async (credentialResponse) => {
-
     const googleToken = credentialResponse.credential;
     const user = decodeToken(googleToken);
 
@@ -78,20 +83,22 @@ export default function Login() {
         { withCredentials: true }
       );
 
-      if(response.data.status == "success" || response.data.status == "created") {
+      if (
+        response.data.status == "success" ||
+        response.data.status == "created"
+      ) {
         navigate("/home", { state: { username: response.data.username } }); // Pass username to the next route
       } else {
         setErrorMessage("Login failed, " + response.data.message);
       }
-    }
-    catch (error) {
+    } catch (error) {
       setErrorMessage(error.message);
     }
   };
 
   const handleGoogleFail = () => {
     setErrorMessage("Error logging in with Google. Please try again later.");
-  }
+  };
 
   return (
     <div className="login">
@@ -121,7 +128,7 @@ export default function Login() {
           </div>
         </form>
         <div>
-        <GoogleLogin
+          <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleFail}
           />

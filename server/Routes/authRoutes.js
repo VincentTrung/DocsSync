@@ -45,37 +45,42 @@ router.post("/api/login", async (req, res) => {
 });
 
 /* Store into database using email (unique)
-*  Username displayed is Google username, not email
-*/
-router.post("/googleSignin", async(req, res) => {
+ *  Username displayed is Google username, not email
+ */
+router.post("/api/googleSignin", async (req, res) => {
   const user = req.body.user;
   const email = user.email;
   const username = user.name;
-  
+
   // CORS
   res.header("Access-Control-Allow-Origin", frontendUrl);
   res.header("Access-Control-Allow-Credentials", true);
 
   // Check if data is valid
-  if(!user || !email) {
-    return res.status(500).json({status: "invalid", message: "Server error: Missing data for Google Auth"});
+  if (!user || !email) {
+    return res.status(500).json({
+      status: "invalid",
+      message: "Server error: Missing data for Google Auth",
+    });
   }
-  
+
   // Signup/Login Google user
   const inDatabase = await User.findOne({ username: email });
   try {
-    if(!inDatabase) {
-      const hashedPassword = await bcrypt.hash('', 10);
+    if (!inDatabase) {
+      const hashedPassword = await bcrypt.hash("", 10);
       const newUser = new User({ username: email, password: hashedPassword });
       await newUser.save();
     }
     req.session.username = username;
-    req.session.loginMethod = 'google';
+    req.session.loginMethod = "google";
 
     return res.json({ status: "success", username: username });
-  }
-  catch (error) {
-    return res.status(500).json({status: "error", message: "Something went wrong in server during Google Auth"});
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong in server during Google Auth",
+    });
   }
 });
 

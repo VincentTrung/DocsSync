@@ -13,7 +13,7 @@ router.get("/api/session", isAuthenticated, (req, res) => {
 });
 
 // Get loginMethod of current session
-router.get("/loginMethod", isAuthenticated, (req, res) => {
+router.get("/api/loginMethod", isAuthenticated, (req, res) => {
   res.json({ loginMethod: req.session.loginMethod });
 });
 
