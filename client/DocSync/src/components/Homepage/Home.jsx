@@ -213,6 +213,24 @@ export default function Home() {
     }
   };
 
+  // Removing sharedUsers from doc
+  const removeSharedUser = async (removedUser) => {
+    try {
+      const response = await axios.post(
+        `${backendUrl}/documents/${currentDoc._id}/removeSharedUser`,
+        { username: removedUser },
+        { withCredentials: true }
+      );
+
+      // Update the current list
+      setCurrentSharedUsers((prevUsers) =>
+        prevUsers.filter((user) => user !== userToRemove)
+      );
+    } catch (error) {
+      console.error("Error removing shared user:", error);
+    }
+  };
+
   function SignoutButton() {
     async function onSignout() {
       try {
@@ -262,7 +280,6 @@ export default function Home() {
                 style={{ textDecoration: "none" }}
               >
                 <h3>{doc.title || "Untitled Document"}</h3>
-                <p>Owner: {doc.owner}</p>
               </Link>
               <button onClick={() => handleOpenModal(doc)}>
                 Add Shared User
