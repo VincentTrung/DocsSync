@@ -231,7 +231,7 @@ export default function Home() {
 
       // Update the current list
       setCurrentSharedUsers((prevUsers) =>
-        prevUsers.filter((user) => user !== userToRemove)
+        prevUsers.filter((user) => user !== removedUser)
       );
     } catch (error) {
       if (error.response) {

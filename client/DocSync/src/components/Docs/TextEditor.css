@@ -1,8 +1,18 @@
-/* Hide all elements you don't want to print */
+/* CSS of the printed document*/
+@page {
+  margin: 5rem 0;
+}
+
 @media print {
+  /* Hiding elements for print */
   .videoCallContainer,
   .documentHeader,
   .activeUsers {
+    display: none !important;
+  }
+  /* Hide the toolbar */
+  .container .ql-toolbar.ql-snow {
+    border: none;
     display: none;
   }
 }

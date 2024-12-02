@@ -49,38 +49,6 @@ body {
   padding: 5px;
 }
 
-/* CSS of the printed document*/
-@page {
-  margin: 5rem 0;
-}
-@media print {
-  body {
-    background: none;
-  }
-  .container {
-    width: 100%;
-    height: 100%;
-  }
-  @media print {
-    .container .ql-editor {
-      width: 6.5in;
-      padding: 0;
-      margin: 0;
-      box-shadow: none;
-      border: none;
-
-      align-self: flex-start;
-      height: auto;
-      page-break-inside: avoid;
-    }
-  }
-
-  .container .ql-toolbar.ql-snow {
-    border: none;
-    display: none;
-  }
-}
-
 .errorMessage {
   color: red;
   font-weight: bold;
