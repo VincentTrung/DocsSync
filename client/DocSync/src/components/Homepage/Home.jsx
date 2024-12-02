@@ -195,6 +195,7 @@ export default function Home() {
   const handleCloseModal = () => {
     setShowModal(false);
     setSharedUser("");
+    setShareErrorMessage("");
   };
 
   // SharedUsers Model stuff
@@ -210,7 +211,7 @@ export default function Home() {
       setCurrentSharedUsers([...currentSharedUsers, sharedUser]); // Update list of shared users
       setSharedUser(""); // Clear input field
     } catch (error) {
-      if(error.response) {
+      if (error.response) {
         setShareErrorMessage("Error: " + error.response.data.message);
       }
     }
@@ -230,7 +231,7 @@ export default function Home() {
         prevUsers.filter((user) => user !== userToRemove)
       );
     } catch (error) {
-      if(error.response) {
+      if (error.response) {
         setShareErrorMessage("Error: " + error.response.data.message);
       }
     }
@@ -262,151 +263,156 @@ export default function Home() {
 
   return (
     <div className="homepage">
-  <div className="homeHeader">
-    <h1>DocsSync</h1>
-    {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-    <SignoutButton />
-  </div>
-
-  <div className="homeBody">
-    <h1>Welcome, {username}!</h1>
-    <div className="docCreateContainer">
-      <div className="docCreateInner">
-        <div className="startDoc" onClick={handleCreateNewDocument}>
-          <p>Start a new Document</p>
-        </div>
+      <div className="homeHeader">
+        <h1>DocsSync</h1>
+        {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
+        <SignoutButton />
       </div>
-    </div>
 
-    <div>
-      <h2>Your Documents:</h2>
-      <div className="boxContainer">
-        <div className="docsList">
-          {ownerDocuments.length > 0 ? (
-            ownerDocuments.slice(0, docLimit).map((doc) => (
-              <div key={doc._id} className="boxStyle">
-                <Link
-                  to={`/documents/${doc._id}`}
-                  style={{ textDecoration: "none" }}
-                >
-                  <h3>{doc.title || "Untitled Document"}</h3>
-                  <p>Owner: {doc.owner}</p>
-                </Link>
-                <button onClick={() => handleOpenModal(doc)}>
-                  Add Shared User
-                </button>
-                <button onClick={() => handleDeleteDocument(doc._id, "owner")}>
-                  Delete Document
-                </button>
-              </div>
-            ))
-          ) : (
-            <p>No documents found.</p>
-          )}
-        </div>
-        <div className="paginationControls">
-          <div>
-            <button
-              onClick={() => handlePreviousPage("owner")}
-              disabled={ownerDocumentsPage == 1}
-            >
-              Previous
-            </button>
-          </div>
-          <div><span>Page {ownerDocumentsPage}</span></div>
-          <button
-            onClick={() => handleNextPage("owner")}
-            disabled={!hasMoreOwnerDocuments}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <h2>Shared Documents:</h2>
-      <div className="boxContainer">
-        <div className="docsList">
-          {sharedDocuments.length > 0 ? (
-            sharedDocuments.slice(0, docLimit).map((doc) => (
-              <Link
-                to={`/documents/${doc._id}`}
-                key={doc._id}
-                style={{ textDecoration: "none" }}
-              >
-                <div className="boxStyle">
-                  <h3>{doc.title || "Untitled Document"}</h3>
-                  <p>Shared by: {doc.owner}</p>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <p>No shared documents found.</p>
-          )}
-        </div>
-
-        <div className="paginationControls">
-          <button
-            onClick={() => handlePreviousPage("shared")}
-            disabled={sharedDocumentsPage == 1}
-          >
-            Previous
-          </button>
-          <span>Page {sharedDocumentsPage}</span>
-          <button
-            onClick={() => handleNextPage("shared")}
-            disabled={!hasMoreSharedDocuments}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </div>
-
-    {showModal && (
-      <div className="modal">
-        <div className="modalContent">
-          {shareErrorMessage && (
-            <p className="errorMessage">{shareErrorMessage}</p>
-          )}
-          <div className="modalAddUser">
-            <h3>Share Users for '{currentDoc.title || "Untitled Document"}'</h3>
-            <div>
-              <input
-                type="text"
-                placeholder="Enter a username"
-                value={sharedUser}
-                onChange={(e) => setSharedUser(e.target.value)}
-              />
-            </div>
-            <div className="modalButtons">
-              <button onClick={addSharedUser}>Add User</button>
-              <button onClick={handleCloseModal}>Close</button>
+      <div className="homeBody">
+        <h1>Welcome, {username}!</h1>
+        <div className="docCreateContainer">
+          <div className="docCreateInner">
+            <div className="startDoc" onClick={handleCreateNewDocument}>
+              <p>Start a new Document</p>
             </div>
           </div>
+        </div>
 
-          <div>
-            <h3>Currently Shared Users:</h3>
-            <div className="sharedUsersList">
-              {currentSharedUsers.length > 0 ? (
-                currentSharedUsers.map((user, index) => (
-                  <div key={index} className="sharedUserItem">
-                    <p>{user}</p>
-                    <button onClick={() => removeSharedUser(user)}>
-                      Remove
+        <div>
+          <h2>Your Documents:</h2>
+          <div className="boxContainer">
+            <div className="docsList">
+              {ownerDocuments.length > 0 ? (
+                ownerDocuments.slice(0, docLimit).map((doc) => (
+                  <div key={doc._id} className="boxStyle">
+                    <Link
+                      to={`/documents/${doc._id}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <h3>{doc.title || "Untitled Document"}</h3>
+                    </Link>
+                    <button onClick={() => handleOpenModal(doc)}>
+                      Add Shared User
+                    </button>
+                    <button
+                      onClick={() => handleDeleteDocument(doc._id, "owner")}
+                    >
+                      Delete Document
                     </button>
                   </div>
                 ))
               ) : (
-                <p>No users shared yet.</p>
+                <p>No documents found.</p>
               )}
+            </div>
+            <div className="paginationControls">
+              <div>
+                <button
+                  onClick={() => handlePreviousPage("owner")}
+                  disabled={ownerDocumentsPage == 1}
+                >
+                  Previous
+                </button>
+              </div>
+              <div>
+                <span>Page {ownerDocumentsPage}</span>
+              </div>
+              <button
+                onClick={() => handleNextPage("owner")}
+                disabled={!hasMoreOwnerDocuments}
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
+
+        <div>
+          <h2>Shared Documents:</h2>
+          <div className="boxContainer">
+            <div className="docsList">
+              {sharedDocuments.length > 0 ? (
+                sharedDocuments.slice(0, docLimit).map((doc) => (
+                  <Link
+                    to={`/documents/${doc._id}`}
+                    key={doc._id}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <div className="boxStyle">
+                      <h3>{doc.title || "Untitled Document"}</h3>
+                      <p>Shared by: {doc.owner}</p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p>No shared documents found.</p>
+              )}
+            </div>
+
+            <div className="paginationControls">
+              <button
+                onClick={() => handlePreviousPage("shared")}
+                disabled={sharedDocumentsPage == 1}
+              >
+                Previous
+              </button>
+              <span>Page {sharedDocumentsPage}</span>
+              <button
+                onClick={() => handleNextPage("shared")}
+                disabled={!hasMoreSharedDocuments}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {showModal && (
+          <div className="modal">
+            <div className="modalContent">
+              {shareErrorMessage && (
+                <p className="errorMessage">{shareErrorMessage}</p>
+              )}
+              <div className="modalAddUser">
+                <h3>
+                  Share Users for '{currentDoc.title || "Untitled Document"}'
+                </h3>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Enter a username"
+                    value={sharedUser}
+                    onChange={(e) => setSharedUser(e.target.value)}
+                  />
+                </div>
+                <div className="modalButtons">
+                  <button onClick={addSharedUser}>Add User</button>
+                  <button onClick={handleCloseModal}>Close</button>
+                </div>
+              </div>
+
+              <div>
+                <h3>Currently Shared Users:</h3>
+                <div className="sharedUsersList">
+                  {currentSharedUsers.length > 0 ? (
+                    currentSharedUsers.map((user, index) => (
+                      <div key={index} className="sharedUserItem">
+                        <p>{user}</p>
+                        <button onClick={() => removeSharedUser(user)}>
+                          Remove
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No users shared yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    )}
-  </div>
-</div>
+    </div>
   );
 }
