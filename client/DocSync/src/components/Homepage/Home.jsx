@@ -36,29 +36,29 @@ export default function Home() {
         withCredentials: true,
       });
       setUsername(userResponse.data.username);
-      // console.log("+++++", userResponse.data.username);
 
       // Fetch owner documents
-      const ownerDocsResponse = await axios.get(`${backendUrl}/documents`, {
-        params: { page: ownerPage },
-        withCredentials: true,
-      });
-      const ownerDocs = ownerDocsResponse.data.filter(
-        (doc) => doc.owner == userResponse.data.username
+      const ownerDocsResponse = await axios.get(
+        `${backendUrl}/documents/owner`,
+        {
+          params: { page: ownerPage },
+          withCredentials: true,
+        }
       );
-      setOwnerDocuments(ownerDocs);
-      setHasMoreOwnerDocuments(ownerDocs.length == limit); // Disable if less than limit
+      setOwnerDocuments(ownerDocsResponse.data);
+      setHasMoreOwnerDocuments(ownerDocsResponse.data.length == limit); // Disable if less than limit
 
       // Fetch shared documents
-      const sharedDocsResponse = await axios.get(`${backendUrl}/documents`, {
-        params: { page: sharedPage },
-        withCredentials: true,
-      });
-      const sharedDocs = sharedDocsResponse.data.filter((doc) =>
-        doc.sharedUsers.includes(userResponse.data.username)
+      const sharedDocsResponse = await axios.get(
+        `${backendUrl}/documents/shared`,
+        {
+          params: { page: sharedPage },
+          withCredentials: true,
+        }
       );
-      setSharedDocuments(sharedDocs);
-      setHasMoreSharedDocuments(sharedDocs.length == limit); // Disable if less than limit
+
+      setSharedDocuments(sharedDocsResponse.data);
+      setHasMoreSharedDocuments(sharedDocsResponse.data.length == limit); // Disable if less than limit
     } catch (error) {
       console.log(error);
     }
@@ -94,14 +94,17 @@ export default function Home() {
         });
         setUsername(userResponse.data.username);
 
-        const docResponse = await axios.get(`${backendUrl}/documents`, {
+        const docResponse = await axios.get(`${backendUrl}/documents/owner`, {
+          withCredentials: true,
+        });
+        const docResponse2 = await axios.get(`${backendUrl}/documents/shared`, {
           withCredentials: true,
         });
 
         const ownerDocs = docResponse.data.filter(
           (doc) => doc.owner === userResponse.data.username
         );
-        const sharedDocs = docResponse.data.filter((doc) =>
+        const sharedDocs = docResponse2.data.filter((doc) =>
           doc.sharedUsers.includes(userResponse.data.username)
         );
 
@@ -341,7 +344,8 @@ export default function Home() {
                   >
                     <div className="boxStyle">
                       <h3>{doc.title || "Untitled Document"}</h3>
-                      <p>Shared by: {doc.owner}</p>
+                      <p>Shared by:</p>
+                      <p>{doc.owner}</p>
                     </div>
                   </Link>
                 ))

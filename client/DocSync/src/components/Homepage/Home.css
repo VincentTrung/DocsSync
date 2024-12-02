@@ -49,7 +49,7 @@
   transition: border-color 0.5s ease, background-color 0.2s ease;
 }
 
-.boxContainer a {
+.boxContainer h3 {
   color: inherit; /* ensure the blue hue is gone from text */
   text-decoration: none;
   display: -webkit-box; /* To make sure the text does not overflow too long */
@@ -73,6 +73,13 @@
 .boxStyle p {
   color: black;
   font-size: 14px;
+  margin: 0;
+  direction: ltr;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 130px;
+  text-align: center;
 }
 
 .docsList {

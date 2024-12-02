@@ -5,18 +5,44 @@ const User = require("../Models/User");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid"); // generate unique id
 
-// Get a document for the current user
-router.get("/api/documents", isAuthenticated, async (req, res) => {
+// Get documents for the current user as the owner
+router.get("/api/documents/owner", isAuthenticated, async (req, res) => {
   const username = req.session.username;
-  // Pagination
   const page = parseInt(req.query.page) || 1; // default to 1
   const limit = 10;
 
   try {
-    // Find documents where the user is either owner or sharedUser
-    const documents = await Document.find({
-      $or: [{ owner: username }, { sharedUsers: username }],
-    })
+    // Find documents where the user is the owner
+    const documents = await Document.find({ owner: username })
+      .skip((page - 1) * limit)
+      .limit(limit + 1); // Extra one for frontend "next" button
+
+    const formattedDocuments = documents.map((doc) => ({
+      _id: doc._id,
+      data: doc.data,
+      title: doc.title,
+      owner: doc.owner,
+      sharedUsers: doc.sharedUsers,
+      isOwner: doc.owner === username,
+      isSharedUser: doc.sharedUsers.includes(username),
+    }));
+    res.json(formattedDocuments);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching documents." });
+  }
+});
+
+// Get documents for the current user as a shared user
+router.get("/api/documents/shared", isAuthenticated, async (req, res) => {
+  const username = req.session.username;
+  const page = parseInt(req.query.page) || 1; // default to 1
+  const limit = 10;
+
+  try {
+    // Find documents where the user is a shared user
+    const documents = await Document.find({ sharedUsers: username })
       .skip((page - 1) * limit)
       .limit(limit + 1); // Extra one for frontend "next" button
 
