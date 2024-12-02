@@ -72,10 +72,10 @@ router.post("/api/googleSignin", async (req, res) => {
       const newUser = new User({ username: email, password: hashedPassword });
       await newUser.save();
     }
-    req.session.username = username;
+    req.session.username = email;
     req.session.loginMethod = "google";
 
-    return res.json({ status: "success", username: username });
+    return res.json({ status: "success", username: email });
   } catch (error) {
     return res.status(500).json({
       status: "error",
