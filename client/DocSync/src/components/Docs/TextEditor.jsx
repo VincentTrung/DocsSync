@@ -479,7 +479,7 @@ export default function TextEditor() {
           {videoCallEnabled ? (
             <>
               <video ref={userVideoRef} autoPlay muted />
-              <p className="myUsername">{userId}</p>
+              <p className="myUsername videoNames">{userId}</p>
             </>
           ) : null}
         </div>
@@ -499,7 +499,7 @@ export default function TextEditor() {
                   }
                 }}
               ></video>
-              <p className="username">{peerData.username}</p>
+              <p className="username videoNames">{peerData.username}</p>
             </div>
           ))}
       </div>
