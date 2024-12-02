@@ -11,6 +11,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("Guest");
   const [errorMessage, setErrorMessage] = useState("");
+  const [shareErrorMessage, setShareErrorMessage] = useState("");
   // arr of docs
   const [ownerDocuments, setOwnerDocuments] = useState([]);
   const [sharedDocuments, setSharedDocuments] = useState([]);
@@ -209,7 +210,9 @@ export default function Home() {
       setCurrentSharedUsers([...currentSharedUsers, sharedUser]); // Update list of shared users
       setSharedUser(""); // Clear input field
     } catch (error) {
-      console.error("Error adding shared user:", error);
+      if(error.response) {
+        setShareErrorMessage("Error: " + error.response.data.message);
+      }
     }
   };
 
@@ -344,6 +347,9 @@ export default function Home() {
     {showModal && (
       <div className="modal">
         <div className="modalContent">
+          {shareErrorMessage && (
+            <p className="errorMessage">{shareErrorMessage}</p>
+          )}
           <div className="modalAddUser">
             <h3>Share Users for '{currentDoc.title || "Untitled Document"}'</h3>
             <div>

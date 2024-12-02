@@ -1,34 +1,43 @@
 /* Hide all elements you don't want to print */
 @media print {
-  .video-call-container,
-  .document-header,
-  .active-users {
+  .videoCallContainer,
+  .documentHeader,
+  .activeUsers {
     display: none;
   }
 }
 
+.documentEditor {
+  font-family: Arial, sans-serif;
+}
+
 /* Styles for the document title */
-.document-header {
+.documentHeader {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  margin: 10px;
+  padding: 10px;
+  background-color: #d6d6d6;
 }
 
 .docTitle {
-  font-size: calc(2vw);
+  font-size: 16px;
   font-weight: bold;
   color: #000000;
   padding: 10px;
+  border: none;
   border-radius: 4px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   text-align: center;
   text-overflow: ellipsis; /* For overflow */
   width: fit-content;
 }
 
+.docTitle:focus {
+  border:#a3a3a3;
+}
+
 /* Doc cursors and username tracking */
-.cursors-layer {
+.cursorsLayer {
   pointer-events: none;
   position: absolute;
   top: 0;
@@ -37,36 +46,45 @@
   height: 100%;
 }
 
-.cursor-indicator {
+.cursorIndicator {
   z-index: 10;
 }
 
-.active-users {
-  padding: 8px;
+.activeUsers {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 5px;
+  padding-right: 5px;
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
-.active-users ul {
+.activeUsers h3 {
+  font-size: 14px;
+  color: #3d3d3d;
+  margin-bottom: 0;
+}
+
+.activeUsers ul {
   padding: 0;
 }
 
-.active-users li {
+.activeUsers li {
   display: flex;
   align-items: center;
-  font-weight: bold;
   margin: 4px;
   font-size: 14px;
 }
 
-.video-call-container {
+.videoCallContainer {
   display: flex;
   overflow-x: auto; /* scrolling */
-  background-color: #a3a3a3;
+  background-color: #c0c0c0;
   padding: 10px;
 }
 
-.my-video video {
+.myVideo video {
   border: 5px solid #000000;
   border-radius: 8px;
   width: 130px;
@@ -76,10 +94,30 @@
   background-color: #000000;
 }
 
-.peer-video video {
+.peerVideo video {
   border: 1px solid #dedede;
-  border-radius: 8px;
+  border-radius: 4px;
   width: 130px;
   height: 100px;
   margin-right: 10px;
+}
+
+.videoCallToggle button {
+  background-color: #5584b6;
+  padding: 10px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.videoCallToggle button:hover {
+  background-color: #3e6d9e;
+}
+
+.myUsername {
+  display: flex;
+  font-size: 14px;
+  align-items: center;
+  justify-content: center;
 }

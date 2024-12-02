@@ -468,14 +468,14 @@ export default function TextEditor() {
   // console.log(otherPeers);
 
   return (
-    <div className="container">
-      <div className="video-call-container">
-        <div className="video-call-toggle">
+    <div className="container documentEditor">
+      <div className="videoCallContainer">
+        <div className="videoCallToggle">
           <button onClick={() => setVideoCallEnabled((prev) => !prev)}>
             {videoCallEnabled ? "Disable Video Call" : "Enable Video Call"}
           </button>
         </div>
-        <div className="my-video">
+        <div className="myVideo">
           {videoCallEnabled ? (
             <>
               <video ref={userVideoRef} autoPlay muted />
@@ -486,15 +486,15 @@ export default function TextEditor() {
         {otherPeers
           .filter(
             (peerData) =>
-              peerData.stream.id != myStream?.id &&
-              peerData.stream.active == true
+              peerData.stream.id !== myStream?.id &&
+              peerData.stream.active === true
           )
           .map((peerData, index) => (
-            <div key={peerData.peerId || index} className="peer-video">
+            <div key={peerData.peerId || index} className="peerVideo">
               <video
                 autoPlay
                 ref={(video) => {
-                  if (video && video.srcObject != peerData.stream) {
+                  if (video && video.srcObject !== peerData.stream) {
                     video.srcObject = peerData.stream;
                   }
                 }}
@@ -503,14 +503,14 @@ export default function TextEditor() {
             </div>
           ))}
       </div>
-      <div className="document-header">
+      <div className="documentHeader">
         <input
           type="text"
           value={documentTitle}
           onChange={handleTitleChange} // Update title on change
           className="docTitle"
         />
-        <div className="active-users">
+        <div className="activeUsers">
           <h3>Active Document Editors</h3>
           <ul>
             {activeUsers.map((cursor) => (

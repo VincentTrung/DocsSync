@@ -5,7 +5,7 @@
 }
 
 body {
-  background-color: #d8d8d8;
+  background-color: #efefef;
   margin: 0;
 }
 
@@ -30,11 +30,23 @@ body {
 .container .ql-toolbar.ql-snow {
   display: flex;
   justify-content: center;
+  align-items: center;
   background-color: #d6d6d6;
-  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+.ql-toolbar .ql-formats button,
+.ql-toolbar .ql-formats select {
+  margin: 0 5px;
+  padding: 5px;
 }
 
 /* CSS of the printed document*/
@@ -67,4 +79,9 @@ body {
     border: none;
     display: none;
   }
+}
+
+.errorMessage {
+  color: red;
+  font-weight: bold;
 }
