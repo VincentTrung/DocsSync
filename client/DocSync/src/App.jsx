@@ -1,5 +1,4 @@
 import "./App.css";
-import { v4 as uuidV4 } from "uuid";
 import {
   BrowserRouter as Router,
   Route,

@@ -1,3 +1,12 @@
+/* Hide all elements you don't want to print */
+@media print {
+  .video-call-container,
+  .document-header,
+  .active-users {
+    display: none;
+  }
+}
+
 /* Styles for the document title */
 .document-header {
   display: flex;
