@@ -80,6 +80,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   column-gap: 20px;
+  row-gap: 10px;
 }
 
 .docsList button {
@@ -207,7 +208,6 @@
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  column-gap: 10px;
   align-items: center;
   justify-content: center;
 }
@@ -220,6 +220,13 @@
   padding: 10px;
   margin-top: 10px;
   border-radius: 4px;
+}
+
+.sharedUserItem {
+  display: flex;
+  justify-content: space-between; /* leave center empty */
+  padding: 8px 0;
+  border-bottom: 1px solid gray;
 }
 
 button {
