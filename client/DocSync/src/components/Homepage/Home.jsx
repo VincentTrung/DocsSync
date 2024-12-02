@@ -230,7 +230,9 @@ export default function Home() {
         prevUsers.filter((user) => user !== userToRemove)
       );
     } catch (error) {
-      console.error("Error removing shared user:", error);
+      if(error.response) {
+        setShareErrorMessage("Error: " + error.response.data.message);
+      }
     }
   };
 
